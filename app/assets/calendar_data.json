@@ -1,0 +1,42 @@
+{
+  "dates": [
+    {
+      "date": "2026-01-21",
+      "dateFrom": "21:30",
+      "dateTo": "22:30",
+      "typeId": 1
+    },
+    {
+      "date": "2026-01-23",
+      "dateFrom": "07:00",
+      "dateTo": "11:45",
+      "typeId": 2
+    }
+  ],
+  "regularity": [
+    {
+      "dayName": "tuesday",
+      "dateFrom": "09:30",
+      "dateTo": "10:30",
+      "typeId": 3
+    },
+    {
+      "dayName": "monday",
+      "dateFrom": "07:00",
+      "dateTo": "11:45",
+      "typeId": 4
+    },
+    {
+      "dayName": "friday",
+      "dateFrom": "12:00",
+      "dateTo": "13:00",
+      "typeId": 1
+    }
+  ],
+  "options": [
+    { "id": 1, "name": "Schůzka", "cssClass": "danger" },
+    { "id": 2, "name": "Konzultace", "cssClass": "success" },
+    { "id": 3, "name": "Volno", "cssClass": "primary" },
+    { "id": 4, "name": "Jiné", "cssClass": "warning" }
+  ]
+}
