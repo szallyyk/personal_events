@@ -3,7 +3,7 @@
     <FullCalendar :options="calendarOptions">
       <template #eventContent="{ event }">
         <div>
-          {{ event.title }}
+          {{ getTypeName(event.extendedProps.typeId) }}: {{ event.title }}
         </div>
       </template>
     </FullCalendar>
@@ -26,7 +26,7 @@ import FullCalendar from "@fullcalendar/vue3";
 import interactionPlugin from "@fullcalendar/interaction";
 import csLocale from "@fullcalendar/core/locales/cs";
 import listPlugin from "@fullcalendar/list";
-import { dates, regularity, options } from "~/assets/calendar_data.json";
+import { dates, regularity, options, name } from "~/assets/calendar_data.json";
 
 const optionsRef = ref(options);
 const datesRef = ref(dates);
@@ -45,7 +45,10 @@ function getTypeClass(typeId) {
   const type = optionsRef.value.find((t) => t.id === typeId);
   return type ? type.cssClass : "primary";
 }
-
+function getTypeName(typeId) {
+  const type = optionsRef.value.find((t) => t.id === typeId);
+  return type ? type.name : "Neznámý typ";
+}
 function getRecurringDates(dayName, startDate, endDate) {
   const result = [];
   const dayNumber = dayNameToNumber[dayName.toLowerCase()];
@@ -83,10 +86,11 @@ function generateEvents() {
     const cssClass = getTypeClass(item.typeId);
     allEvents.push({
       id: `date-${index}`,
-      title: `Jednorázově: ${item.dateFrom} - ${item.dateTo}`,
+      title: `${item.dateFrom} - ${item.dateTo}`,
       start: `${item.date}T${item.dateFrom}`,
       end: `${item.date}T${item.dateTo}`,
-      classNames: [`event-${cssClass}`] // Přidá třídu např. "event-danger"
+      classNames: [`event-${cssClass}`], // Přidá třídu např. "event-danger"
+      typeId: item.typeId // Přidá typeId do extendedProps
     });
   });
 
@@ -108,10 +112,11 @@ function generateEvents() {
 
       allEvents.push({
         id: `regular-${regIndex}-${dateIndex}`,
-        title: `Pravidelně: ${item.dateFrom} - ${item.dateTo}`,
+        title: `${item.dateFrom} - ${item.dateTo}`,
         start: `${dateStr}T${item.dateFrom}`,
         end: `${dateStr}T${item.dateTo}`,
-        classNames: [`event-${cssClass}`]
+        classNames: [`event-${cssClass}`],
+        typeId: item.typeId // Přidá typeId do extendedProps
       });
     });
   });
@@ -152,7 +157,7 @@ const calendarOptions = ref({
   },
   customButtons: {
     secondTitle: {
-      text: "Přehled termínů",
+      text: `Přehled dostupnosti - ${name}`,
       click: function () {
         // Nemusí dělat nic, jen zobrazuje text
       }
