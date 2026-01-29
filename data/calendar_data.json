@@ -1,0 +1,54 @@
+{
+  "name": "David musil",
+  "options": [
+    {
+      "id": 1,
+      "name": "Schůzka",
+      "cssClass": "danger"
+    },
+    {
+      "id": 2,
+      "name": "Dostupný2",
+      "cssClass": "success"
+    },
+    {
+      "id": 3,
+      "name": "Volno",
+      "cssClass": "primary"
+    },
+    {
+      "id": 4,
+      "name": "Jiné",
+      "cssClass": "warning"
+    },
+    {
+      "id": 5,
+      "name": "Konzultace",
+      "cssClass": "pink"
+    },
+    {
+      "id": 6,
+      "name": "Nedostupný",
+      "cssClass": "danger"
+    },
+    {
+      "id": 7,
+      "name": "Test add",
+      "cssClass": "pink"
+    },
+    {
+      "id": -1,
+      "name": "Specialní event kde nic neni",
+      "cssClass": "success"
+    }
+  ],
+  "dates": [],
+  "regularity": [
+    {
+      "dayName": "monday",
+      "dateFrom": "10:01",
+      "dateTo": "11:04",
+      "typeId": 3
+    }
+  ]
+}

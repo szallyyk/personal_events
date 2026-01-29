@@ -1,0 +1,54 @@
+{
+  "options": [
+    {
+      "id": 1,
+      "name": "Schůzka",
+      "cssClass": "indigo"
+    },
+    {
+      "id": 2,
+      "name": "Dostupný",
+      "cssClass": "success"
+    },
+    {
+      "id": 3,
+      "name": "Volno",
+      "cssClass": "primary"
+    },
+    {
+      "id": 4,
+      "name": "Jiné",
+      "cssClass": "warning"
+    },
+    {
+      "id": 5,
+      "name": "Konzultace",
+      "cssClass": "pink"
+    },
+    {
+      "id": 6,
+      "name": "Nedostupný",
+      "cssClass": "danger"
+    }
+  ],
+  "dates": [
+    {
+      "date": "2026-01-21",
+      "dateFrom": "21:30",
+      "dateTo": "22:30",
+      "typeId": 1
+    },
+    {
+      "date": "2026-01-01",
+      "dateFrom": "12:28",
+      "dateTo": "12:30",
+      "typeId": 1
+    },
+    {
+      "date": "2026-01-30",
+      "dateFrom": "13:44",
+      "dateTo": "13:44",
+      "typeId": 2
+    }
+  ]
+}

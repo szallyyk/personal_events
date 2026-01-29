@@ -7,7 +7,8 @@
     "dev": "nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+      "start": "PORT=8080 node ./server/index.mjs"
   },
   "dependencies": {
     "@fullcalendar/core": "^6.1.20",
@@ -16,12 +17,21 @@
     "@fullcalendar/list": "^6.1.20",
     "@fullcalendar/timegrid": "^6.1.20",
     "@fullcalendar/vue3": "^6.1.20",
+    "@nuxt/icon": "^2.2.1",
+    "@pinia/nuxt": "^0.11.3",
+    "@primeuix/themes": "^2.0.3",
+    "@vee-validate/nuxt": "^4.15.1",
     "bootstrap": "^5.3.8",
     "nuxt": "^4.2.2",
+    "pinia": "^3.0.4",
+    "primevue": "^4.5.4",
     "vue": "^3.5.27",
-    "vue-router": "^4.6.4"
+    "vue-router": "^4.6.4",
+    "vue3-toastify": "^0.2.8",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
+    "@primevue/nuxt-module": "^4.5.4",
     "sass-embedded": "^1.97.2"
   }
 }

@@ -1,17 +1,18 @@
 <template>
   <div class="calendar-container">
-    <FullCalendar :options="calendarOptions">
+    <FullCalendar v-if="isLoaded" :options="calendarOptions" ref="calendarRef">
       <template #eventContent="{ event }">
         <div>
-          {{ getTypeName(event.extendedProps.typeId) }}: {{ event.title }}
+          {{ getTypeName(event.extendedProps.typeId) }} {{ event.title }}
         </div>
       </template>
     </FullCalendar>
-    <div class="row">
+    <div v-else>Načítání...</div>
+    <div class="row mt-3">
       <div class="col-lg-12">
-        <ul class="list-unstyled legend-list mt-2">
+        <ul class="list-unstyled legend-list">
           <li v-for="option in optionsRef" :key="option.id">
-            <span :class="`bg-${option.cssClass}`">&nbsp;&nbsp;</span>
+            <span :class="`event-${option.cssClass}`">&nbsp;&nbsp;</span>
             {{ option.name }}
           </li>
         </ul>
@@ -19,18 +20,41 @@
     </div>
   </div>
 </template>
-
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import FullCalendar from "@fullcalendar/vue3";
 import interactionPlugin from "@fullcalendar/interaction";
 import csLocale from "@fullcalendar/core/locales/cs";
 import listPlugin from "@fullcalendar/list";
-import { dates, regularity, options, name } from "~/assets/calendar_data.json";
 
-const optionsRef = ref(options);
-const datesRef = ref(dates);
-const regularityRef = ref(regularity);
+const optionsRef = ref([]);
+const datesRef = ref([]);
+const regularityRef = ref([]);
+const name = ref("");
+const isLoaded = ref(false);
+
+const calendarRef = ref(null);
+
+async function fetchData() {
+  try {
+    const response = await $fetch("/api/event");
+    const data = response;
+    optionsRef.value = data.options;
+    datesRef.value = data.dates;
+    regularityRef.value = data.regularity;
+    name.value = data.name;
+
+    isLoaded.value = true;
+  } catch (error) {
+    console.error("Chyba při načítání:", error);
+    isLoaded.value = true;
+  }
+}
+
+onMounted(async () => {
+  await fetchData();
+});
+
 const dayNameToNumber = {
   sunday: 0,
   monday: 1,
@@ -38,17 +62,19 @@ const dayNameToNumber = {
   wednesday: 3,
   thursday: 4,
   friday: 5,
-  saturday: 6
+  saturday: 6,
 };
 
 function getTypeClass(typeId) {
   const type = optionsRef.value.find((t) => t.id === typeId);
   return type ? type.cssClass : "primary";
 }
+
 function getTypeName(typeId) {
   const type = optionsRef.value.find((t) => t.id === typeId);
   return type ? type.name : "Neznámý typ";
 }
+
 function getRecurringDates(dayName, startDate, endDate) {
   const result = [];
   const dayNumber = dayNameToNumber[dayName.toLowerCase()];
@@ -70,58 +96,131 @@ function getRecurringDates(dayName, startDate, endDate) {
   return result;
 }
 
-function formatDate(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+function createEmptySlots(realEvents, rangeStart, rangeEnd) {
+  const emptySlots = [];
+
+  const current = new Date(rangeStart);
+  const end = new Date(rangeEnd);
+
+  while (current <= end) {
+    const dayOfWeek = current.getDay();
+
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+      const dateStr = formatDate(current);
+
+      const hasAnyEvent = realEvents.some((event) => {
+        const eventDate = event.start.split("T")[0];
+        return eventDate === dateStr;
+      });
+
+      if (!hasAnyEvent) {
+        emptySlots.push({
+          id: `empty-${dateStr}`,
+          title: "",
+          start: `${dateStr}T00:00:00`,
+          end: `${dateStr}T23:59:59`,
+          classNames: [`event-success`],
+          allDay: false,
+          extendedProps: {
+            isEmpty: true,
+            typeId: -1,
+          },
+        });
+      }
+    }
+
+    current.setDate(current.getDate() + 1);
+  }
+  return emptySlots;
 }
 
-// Generování eventů jako funkce
-function generateEvents() {
+function generateEvents(rangeStart, rangeEnd) {
   const allEvents = [];
 
-  // 1. Konkrétní datumy z dates
+  // 1. Konkrétní datumy z dates - filtrujeme podle rozsahu
   datesRef.value.forEach((item, index) => {
-    const cssClass = getTypeClass(item.typeId);
-    allEvents.push({
-      id: `date-${index}`,
-      title: `${item.dateFrom} - ${item.dateTo}`,
-      start: `${item.date}T${item.dateFrom}`,
-      end: `${item.date}T${item.dateTo}`,
-      classNames: [`event-${cssClass}`], // Přidá třídu např. "event-danger"
-      typeId: item.typeId // Přidá typeId do extendedProps
-    });
+    const eventDate = new Date(item.date);
+
+    // Přidáme jen eventy v aktuálním rozsahu
+    if (eventDate >= rangeStart && eventDate <= rangeEnd) {
+      const cssClass = getTypeClass(item.typeId);
+      let title;
+      let dateTo;
+      let dateFrom;
+      if (item.dateFrom && item.dateTo) {
+        title = `${item.dateFrom} - ${item.dateTo}`;
+        dateFrom = item.dateFrom;
+        dateTo = item.dateTo;
+      } else {
+        title = "celý den";
+        dateFrom = "00:00:00";
+        dateTo = "23:59:59";
+      }
+      allEvents.push({
+        id: `date-${index}`,
+        title: title,
+        start: `${item.date}T${dateFrom}`,
+        end: `${item.date}T${dateTo}`,
+        classNames: [`event-${cssClass}`],
+        extendedProps: {
+          typeId: item.typeId,
+          isEmpty: false,
+        },
+      });
+    }
   });
 
   // 2. Opakující se eventy z regularity
-  const today = new Date();
-  const rangeStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-  const rangeEnd = new Date(today.getFullYear(), today.getMonth() + 6, 0);
-
   regularityRef.value.forEach((item, regIndex) => {
     const recurringDates = getRecurringDates(
       item.dayName,
       rangeStart,
-      rangeEnd
+      rangeEnd,
     );
     const cssClass = getTypeClass(item.typeId);
 
     recurringDates.forEach((date, dateIndex) => {
       const dateStr = formatDate(date);
-
+      let title;
+      let dateTo;
+      let dateFrom;
+      if (item.dateFrom && item.dateTo) {
+        title = `${item.dateFrom} - ${item.dateTo}`;
+        dateFrom = item.dateFrom;
+        dateTo = item.dateTo;
+      } else {
+        title = "celý den";
+        dateFrom = "00:00:00";
+        dateTo = "23:59:59";
+      }
       allEvents.push({
         id: `regular-${regIndex}-${dateIndex}`,
-        title: `${item.dateFrom} - ${item.dateTo}`,
-        start: `${dateStr}T${item.dateFrom}`,
-        end: `${dateStr}T${item.dateTo}`,
+        title: title,
+        start: `${dateStr}T${dateFrom}`,
+        end: `${dateStr}T${dateTo}`,
         classNames: [`event-${cssClass}`],
-        typeId: item.typeId // Přidá typeId do extendedProps
+        extendedProps: {
+          typeId: item.typeId,
+          isEmpty: false,
+        },
       });
     });
   });
 
-  return allEvents;
+  // 3. Prázdné sloty
+  const emptySlots = createEmptySlots(allEvents, rangeStart, rangeEnd);
+
+  // 4. Svátky - pro všechny roky v rozsahu
+  const startYear = rangeStart.getFullYear();
+  const endYear = rangeEnd.getFullYear();
+  const allHolidays = [];
+
+  for (let year = startYear; year <= endYear; year++) {
+    const yearHolidays = generateCzechHolidays(year);
+    allHolidays.push(...yearHolidays);
+  }
+
+  return [...allEvents, ...emptySlots, ...allHolidays];
 }
 
 function initialDate() {
@@ -141,42 +240,60 @@ const calendarOptions = ref({
   fixedWeekCount: false,
   plugins: [interactionPlugin, listPlugin],
   initialView: "listWeek",
-  weekends: true,
+  weekends: false,
   height: "auto",
   buttonText: {
     today: "Aktuální měsíc",
     month: "Měsíc",
     week: "Týden",
     day: "Den",
-    list: "Týden"
+    list: "Týden",
   },
   headerToolbar: {
     left: "secondTitle",
     center: "title",
-    right: "next"
+    right: "prev,next",
   },
   customButtons: {
     secondTitle: {
-      text: `Přehled dostupnosti - ${name}`,
-      click: function () {
-        // Nemusí dělat nic, jen zobrazuje text
-      }
+      text: computed(() => `Přehled dostupnosti - ${name.value}`),
+      click: function () {},
+    },
+  },
+  datesSet: function (info) {
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+    var isCurrentWeek = info.start <= today && today < info.end;
+    var prevButton = document.querySelector(".fc-prev-button");
+    if (isCurrentWeek) {
+      prevButton.disabled = true;
+      prevButton.classList.add("fc-button-disabled");
+    } else {
+      prevButton.disabled = false;
+      prevButton.classList.remove("fc-button-disabled");
+    }
+    if (isLoaded.value) {
+      calendarOptions.value.events = generateEvents(info.start, info.end);
     }
   },
   initialDate: initialDate(),
   selectable: true,
-  events: generateEvents(), // Volej funkci přímo
+  events: [],
   eventClick: handleEventClick,
-  dateClick: handleDateSelect
+  dateClick: handleDateSelect,
 });
 
-// Watch pro reaktivitu - pokud se změní dates nebo regularity, aktualizuj eventy
 watch(
-  [datesRef, regularityRef, optionsRef],
+  [datesRef, regularityRef, optionsRef, isLoaded],
   () => {
-    calendarOptions.value.events = generateEvents();
+    if (isLoaded.value && datesRef.value.length > 0) {
+      const calendarApi = calendarRef.value?.getApi();
+      if (calendarApi) {
+        calendarApi.refetchEvents();
+      }
+    }
   },
-  { deep: true }
+  { deep: true },
 );
 </script>
 
@@ -249,7 +366,7 @@ watch(
 }
 
 :deep(.event-danger .fc-list-event-dot) {
-  border-color: #dc3545 !important;
+  border-color: #fd152c !important;
 }
 
 :deep(.event-success .fc-list-event-dot) {
@@ -262,5 +379,45 @@ watch(
 
 :deep(.event-warning .fc-list-event-dot) {
   border-color: #f59e0b !important;
+}
+:deep(.event-indigo .fc-list-event-dot) {
+  border-color: #6610f2 !important;
+}
+:deep(.event-pink .fc-list-event-dot) {
+  border-color: #cc4589 !important;
+}
+
+:deep(.fc-button) {
+  padding: 0.5rem 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  .fc-icon {
+    font-size: 1rem;
+  }
+}
+
+.event-danger {
+  background-color: #fd152c !important;
+}
+.event-success {
+  background-color: #10b981 !important;
+}
+.event-primary {
+  background-color: #3788d8 !important;
+}
+.event-warning {
+  background-color: #f59e0b !important;
+}
+.event-indigo {
+  background-color: #6610f2 !important;
+}
+.event-pink {
+  background-color: #cc4589 !important;
+}
+@media only screen and (max-width: 578px) {
+  :deep(.fc-toolbar) {
+    row-gap: 10px;
+  }
 }
 </style>
