@@ -1,0 +1,8 @@
+{
+  "url": "https://calendarapi.davmosoft.cz/v1",
+  "headers": {
+    "App-Name": "calendar_app",
+    "App-Version": "calendar_app_v1",
+    "Access-Token": "beoK2FozTJo4knnfFk9jcn6BMEuYo7lLoP5RoQ3ABUW7bS7GLmb67QQShsP2bjof49AItiXkyDxiRivJcUDWbHDpWjInEEghiyf5"
+  }
+}

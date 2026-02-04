@@ -31,96 +31,116 @@
               <tr v-for="(field, index) in fields" :key="field.key">
                 <td>
                   <Field
-                    :name="`events[${index}].date`"
-                    v-slot="{ value, handleChange }"
-                  >
-                    <DatePicker
-                      :modelValue="value"
-                      @update:modelValue="handleChange"
-                      class="w-100"
-                      placeholder="Vybrat datum"
-                      date-format="dd.mm.yy"
-                      :disabled="formDisabled"
-                    />
-                  </Field>
-                  <ErrorMessage
-                    :name="`events[${index}].date`"
-                    class="text-danger"
-                  />
-                </td>
-                <td>
-                  <Field
-                    :name="`events[${index}].dateFrom`"
-                    v-slot="{ value, handleChange }"
-                  >
-                    <DatePicker
-                      :modelValue="value"
-                      @update:modelValue="handleChange"
-                      class="w-100"
-                      hour-format="24"
-                      :step-minute="15"
-                      :time-only="true"
-                      :show-time="true"
-                      :show-seconds="false"
-                      placeholder="Vybrat čas"
-                      :disabled="formDisabled"
-                    />
-                  </Field>
-                  <ErrorMessage
-                    :name="`events[${index}].dateFrom`"
-                    class="text-danger"
-                  />
-                </td>
-                <td>
-                  <Field
-                    :name="`events[${index}].dateTo`"
-                    v-slot="{ value, handleChange }"
-                  >
-                    <DatePicker
-                      :modelValue="value"
-                      @update:modelValue="handleChange"
-                      class="w-100"
-                      hour-format="24"
-                      :step-minute="15"
-                      :time-only="true"
-                      :show-time="true"
-                      :show-seconds="false"
-                      placeholder="Vybrat čas"
-                      :disabled="formDisabled"
-                    />
-                  </Field>
-                  <ErrorMessage
-                    :name="`events[${index}].dateTo`"
-                    class="text-danger"
-                  />
-                </td>
-                <td>
-                  <Field
-                    as="select"
-                    :name="`events[${index}].typeId`"
+                    :name="`events[${index}].id`"
+                    type="hidden"
                     class="form-control"
                     :disabled="formDisabled"
-                  >
-                    <option value="" disabled>Vyberte typ</option>
-                    <option
-                      v-for="type in eventTypes"
-                      :key="type.id"
-                      :value="type.id"
-                    >
-                      {{ type.name }}
-                    </option>
-                  </Field>
-                  <ErrorMessage
-                    :name="`events[${index}].typeId`"
-                    class="text-danger"
                   />
+                  <div class="d-flex flex-column gap-1">
+                    <Field
+                      :name="`events[${index}].date`"
+                      v-slot="{ value, handleChange }"
+                    >
+                      <DatePicker
+                        :modelValue="value"
+                        @update:modelValue="handleChange"
+                        class="w-100"
+                        placeholder="Vybrat datum"
+                        date-format="dd.mm.yy"
+                        :disabled="formDisabled"
+                      />
+                    </Field>
+                    <ErrorMessage
+                      :name="`events[${index}].date`"
+                      class="text-danger"
+                    />
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex flex-column gap-1">
+                    <Field
+                      :name="`events[${index}].timeFrom`"
+                      v-slot="{ value, handleChange }"
+                    >
+                      <DatePicker
+                        :modelValue="value"
+                        @update:modelValue="handleChange"
+                        class="w-100"
+                        hour-format="24"
+                        :step-minute="15"
+                        :time-only="true"
+                        :show-time="true"
+                        :show-seconds="false"
+                        placeholder="Vybrat čas"
+                        :disabled="formDisabled"
+                      />
+                    </Field>
+                    <ErrorMessage
+                      :name="`events[${index}].timeFrom`"
+                      class="text-danger"
+                    />
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex flex-column gap-1">
+                    <Field
+                      :name="`events[${index}].timeTo`"
+                      v-slot="{ value, handleChange }"
+                    >
+                      <DatePicker
+                        :modelValue="value"
+                        @update:modelValue="handleChange"
+                        class="w-100"
+                        hour-format="24"
+                        :step-minute="15"
+                        :time-only="true"
+                        :show-time="true"
+                        :show-seconds="false"
+                        placeholder="Vybrat čas"
+                        :disabled="formDisabled"
+                      />
+                    </Field>
+                    <ErrorMessage
+                      :name="`events[${index}].timeTo`"
+                      class="text-danger"
+                    />
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex flex-column gap-1">
+                    <Field
+                      as="select"
+                      :name="`events[${index}].eventTypeId`"
+                      class="form-control"
+                      :disabled="formDisabled"
+                    >
+                      <option value="" disabled>Vyberte typ</option>
+                      <option
+                        v-for="type in eventTypes"
+                        :key="type.id"
+                        :value="type.id"
+                      >
+                        {{ type.name }}
+                      </option>
+                    </Field>
+                    <ErrorMessage
+                      :name="`events[${index}].eventTypeId`"
+                      class="text-danger"
+                    />
+                  </div>
                 </td>
                 <td>
                   <button
                     type="button"
                     class="btn btn-primary d-flex align-items-center justify-content-center"
                     @click="
-                      push({ date: '', dateFrom: '', dateTo: '', typeId: '' })
+                      push({
+                        id: null,
+                        date: '',
+                        timeFrom: '',
+                        timeTo: '',
+                        eventTypeId: '',
+                      })
                     "
                     :disabled="formDisabled"
                   >
@@ -148,7 +168,13 @@
                       type="button"
                       class="btn btn-primary d-flex align-items-center justify-content-center"
                       @click="
-                        push({ date: '', dateFrom: '', dateTo: '', typeId: '' })
+                        push({
+                          id: null,
+                          date: '',
+                          timeFrom: '',
+                          timeTo: '',
+                          eventTypeId: '',
+                        })
                       "
                       :disabled="formDisabled"
                     >
@@ -182,6 +208,10 @@ import DatePicker from "primevue/datepicker";
 import { useForm, useFieldArray, Field, ErrorMessage } from "vee-validate";
 
 const props = defineProps({
+  formErrors: {
+    type: Object,
+    default: () => ({}),
+  },
   initialEvents: {
     type: Array,
     default: () => [],
@@ -197,7 +227,7 @@ const emit = defineEmits(["submit", "delete", "change"]);
 const isSaving = ref(false);
 const formDisabled = ref(false);
 
-const { values, handleSubmit } = useForm({
+const { values, handleSubmit, setErrors } = useForm({
   initialValues: {
     events: props.initialEvents || [],
   },
@@ -216,11 +246,12 @@ watch(
 
 const onSubmit = handleSubmit((formValues) => {
   const sendData = {
-    dates: formValues.events.map((e: any) => ({
+    events: formValues.events.map((e: any) => ({
+      id: e.id || null,
       date: e.date ? formatDate(e.date) : null,
-      dateFrom: e.dateFrom ? formatTime(e.dateFrom) : null,
-      dateTo: e.dateTo ? formatTime(e.dateTo) : null,
-      typeId: e.typeId || null,
+      timeFrom: e.timeFrom ? formatTime(e.timeFrom) : null,
+      timeTo: e.timeTo ? formatTime(e.timeTo) : null,
+      eventTypeId: e.eventTypeId || null,
     })),
   };
   emit("submit", sendData);
@@ -235,6 +266,14 @@ function disableForm() {
 function enableForm() {
   formDisabled.value = false;
 }
+
+const { watchAndSetErrors } = useFormErrorTransformer();
+
+watchAndSetErrors(
+  () => props.formErrors,
+  setErrors,
+  "events", // název tvého array fieldu
+);
 
 defineExpose({
   disableForm,

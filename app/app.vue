@@ -4,6 +4,13 @@
   </NuxtLayout>
   <ToastAlert />
 </template>
+<script setup>
+import "@morev/vue-transitions/styles";
+
+useHead({
+  titleTemplate: "%s - Personal Events",
+});
+</script>
 <style>
 a {
   text-decoration: none;
@@ -16,7 +23,6 @@ body {
   float: left !important;
   margin-left: 5px;
 }
-
 
 .color-indicator {
   width: 20px;

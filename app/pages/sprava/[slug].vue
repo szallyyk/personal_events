@@ -1,33 +1,43 @@
 <template>
   <div class="container">
     <div class="d-flex flex-column gap-4 mt-4">
-      <EventTable
-        ref="eventRef"
-        :initialEvents="events"
-        :event-types="eventTypes"
-        :key="`events-${formKey}`"
-        @submit="updateEvents"
-        @delete="openDeleteModal"
-        @change="handleChange"
-      />
-      <RegularityTable
-        ref="regularityRef"
-        :initialRegularity="regularity"
-        :event-types="eventTypes"
-        :key="`regularity-${formKey}`"
-        @submit="updateRegularity"
-        @delete="openDeleteRegularityModal"
-        @change="handleChange"
-      />
-      <EventTypesTable
-        ref="eventTypesRef"
-        :initialOptions="eventTypes"
-        :event-types="eventTypes"
-        :key="`options-${formKey}`"
-        @submit="updateOption"
-        @delete="openDeleteOption"
-        @change="handleChange"
-      />
+      <template v-if="!isLoading">
+        <EventTable
+          ref="eventRef"
+          :form-errors="eventFormErrors"
+          :initialEvents="calendarEvents"
+          :event-types="calendarEventTypes"
+          :key="`events-${formKey}`"
+          @submit="updateEvents"
+          @delete="openDeleteModal"
+          @change="handleChange"
+        />
+        <RegularityTable
+          ref="regularityRef"
+          :form-errors="regularityFormErrors"
+          :initialRegularity="calendarRegularity"
+          :event-types="calendarEventTypes"
+          :key="`regularity-${formKey}`"
+          @submit="updateRegularity"
+          @delete="openDeleteRegularityModal"
+          @change="handleChange"
+        />
+        <EventTypesTable
+          ref="eventTypesRef"
+          :form-errors="eventTypesFormErrors"
+          :initialOptions="calendarEventTypes"
+          :event-types="calendarEventTypes"
+          :key="`options-${formKey}`"
+          @submit="updateOption"
+          @delete="openDeleteOption"
+          @change="handleChange"
+        />
+      </template>
+      <template v-else>
+        <div class="d-flex justify-content-center align-items-center mt-5">
+          <LoadingSpinner />
+        </div>
+      </template>
     </div>
     <ConfirmModal
       v-if="modalStore.confirmModalVisible"
@@ -46,19 +56,17 @@ import { useToastStore } from "~/store/toast";
 import { useModalStore } from "~/store/modal";
 const modalStore = useModalStore();
 const { alert } = useToastStore();
+const { $api } = useNuxtApp();
+const route = useRoute();
+const routeSlug = route.params.slug as string;
 
 const regularityRef = ref<InstanceType<typeof RegularityTable> | null>(null);
 const eventRef = ref<InstanceType<typeof EventTable> | null>(null);
 const eventTypesRef = ref<InstanceType<typeof EventTypesTable> | null>(null);
 
-useHead({
-  title: "Správa událostí",
-});
-
-const isLoaded = ref(false);
-const eventTypes = ref<EventType[]>([]);
-const events = ref<EventDate[]>([]);
-const regularity = ref<RegularityEvent[]>([]);
+const eventFormErrors = ref<Record<string, string>>({});
+const regularityFormErrors = ref<Record<string, string>>({});
+const eventTypesFormErrors = ref<Record<string, string>>({});
 
 const formKey = ref(0);
 const deleteState = ref<{
@@ -82,85 +90,101 @@ function handleChange(emitOption: { name: string; isEdit: boolean }) {
   }
 }
 
-async function fetchData() {
+const calendarEventTypes = ref<EventType[]>([]);
+const calendarEvents = ref<EventDate[]>([]);
+const calendarRegularity = ref<RegularityEvent[]>([]);
+const isLoading = ref(true);
+
+async function getDetailData() {
   try {
-    const data = await $fetch("/api/event");
-    eventTypes.value = data.options;
+    const responseTypes = await $api.get("/calendars/events/types", {
+      headers: { ["Calendar-Slug"]: routeSlug },
+    });
+    const responseEvents = await $api.get("/calendars/events", {
+      headers: { ["Calendar-Slug"]: routeSlug },
+    });
+    const responseRegularity = await $api.get("/calendars/regularities", {
+      headers: { ["Calendar-Slug"]: routeSlug },
+    });
 
-    events.value = [
-      ...data.dates.map((e: any) => ({
-        ...e,
-        date: e.date ? new Date(e.date) : null,
-      })),
-    ];
+    calendarEvents.value = responseEvents.data.data.records;
 
-    regularity.value = [
-      ...data.regularity.map((e: any) => ({
-        ...e,
-      })),
-    ];
-    formKey.value++;
-    isLoaded.value = true;
-  } catch (error) {
-    console.error("Chyba při načítání:", error);
-    isLoaded.value = true;
+    calendarEvents.value = calendarEvents.value.map((e) => ({
+      ...e,
+      date: e.date.formatSystem ? new Date(e.date.formatSystem) : null,
+      timeFrom: e.timeFrom,
+      timeTo: e.timeTo,
+      eventTypeId: e.eventType.id,
+    }));
+
+    calendarEventTypes.value = responseTypes.data.data.records;
+
+    calendarRegularity.value = responseRegularity.data.data.records;
+
+    calendarRegularity.value = calendarRegularity.value.map((e) => ({
+      id: e.id,
+      dayNumber: e.dayNumber,
+      timeFrom: e.timeFrom,
+      timeTo: e.timeTo,
+      eventTypeId: e.eventType.id,
+    }));
+    formKey.value += 1;
+    isLoading.value = false;
+  } catch (err) {
+    const { message, errors } = parseApiError(err);
+    isLoading.value = false;
+    alert(message, "error");
   }
 }
 
 async function updateEvents(sendData: EventDate) {
   try {
-    const response = await $fetch("/api/event", {
-      method: "POST",
-      body: sendData,
+    const response = await $api.post("/calendars/events", sendData, {
+      headers: { ["Calendar-Slug"]: routeSlug },
     });
-
-    if (response.success) {
-      alert("Události uloženy", "success");
-      await fetchData();
-    }
+    alert(response.data.message, "success");
+    getDetailData();
   } catch (err) {
-    console.error("Chyba při ukládání:", err);
+    const { message, errors } = parseApiError(err);
+    alert(message, "error");
+    eventFormErrors.value = errors.events || {};
   } finally {
     regularityRef.value?.enableForm();
+    eventTypesRef.value?.enableForm();
+  }
+}
+
+async function updateRegularity(sendData: RegularityEvent) {
+  try {
+    const response = await $api.post("/calendars/regularities", sendData, {
+      headers: { ["Calendar-Slug"]: routeSlug },
+    });
+    alert(response.data.message, "success");
+    getDetailData();
+  } catch (err) {
+    const { message, errors } = parseApiError(err);
+    alert(message, "error");
+    regularityFormErrors.value = errors.regularities || {};
+  } finally {
+    eventRef.value?.enableForm();
     eventTypesRef.value?.enableForm();
   }
 }
 
 async function updateOption(sendData: any) {
   try {
-    const response = await $fetch("/api/option", {
-      method: "POST",
-      body: sendData,
+    const response = await $api.post("/calendars/events/types", sendData, {
+      headers: { ["Calendar-Slug"]: routeSlug },
     });
-
-    if (response.success) {
-      alert("Typy událostí uloženy", "success");
-      await fetchData();
-    }
+    alert(response.data.message, "success");
+    getDetailData();
   } catch (err) {
-    console.error("Chyba při ukládání:", err);
+    const { message, errors } = parseApiError(err);
+    alert(message, "error");
+    eventTypesFormErrors.value = errors.eventTypes || {};
   } finally {
+    eventRef.value?.enableForm();
     regularityRef.value?.enableForm();
-    eventRef.value?.enableForm();
-  }
-}
-
-async function updateRegularity(sendData: RegularityEvent) {
-  try {
-    const response = await $fetch("/api/regularity", {
-      method: "POST",
-      body: sendData,
-    });
-
-    if (response.success) {
-      alert("Pravidelné události uloženy", "success");
-      await fetchData();
-    }
-  } catch (err) {
-    console.error("Chyba při ukládání:", err);
-  } finally {
-    eventRef.value?.enableForm();
-    eventTypesRef.value?.enableForm();
   }
 }
 
@@ -214,7 +238,6 @@ async function deleteEvent(eventId: number) {
 
     if (response.success) {
       alert("Událost smazána!", "success");
-      await fetchData();
     } else {
       alert("Chyba při mazání!", "error");
     }
@@ -232,7 +255,6 @@ async function deleteRegularity(regularityId: number) {
 
     if (response.success) {
       alert("Pravidelná událost smazána!", "success");
-      await fetchData();
     } else {
       alert("Chyba při mazání!", "error");
     }
@@ -250,7 +272,6 @@ async function deleteOption(optionId: number) {
 
     if (response.success) {
       alert("Typ události smazán!", "success");
-      await fetchData();
     } else {
       alert("Chyba při mazání!", "error");
     }
@@ -259,8 +280,17 @@ async function deleteOption(optionId: number) {
     alert("Chyba při mazání typu události!", "error");
   }
 }
+
+useHead({
+  title: "Správa událostí",
+});
+
+definePageMeta({
+  layout: "admin",
+});
+
 onMounted(async () => {
-  await fetchData();
+  getDetailData();
 });
 </script>
 <style lang="scss">
@@ -345,8 +375,8 @@ onMounted(async () => {
   .p-inputtext {
     padding: 4px 8px !important;
   }
-  .table{
-    td{
+  .table {
+    td {
       height: auto;
     }
   }

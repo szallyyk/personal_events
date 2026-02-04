@@ -8,16 +8,16 @@ export interface EventType {
 export interface EventDate {
     id: number;
     date: Date | null;
-    dateFrom: string | null;
-    dateTo: string | null;
-    typeId: number | null;
+    timeFrom: string | null;
+    timeTo: string | null;
+    eventTypeId: number | null;
 }
 
 export interface RegularityEvent {
     id: number;
-    dayOfWeek: number;
+    dayNumber: number;
     timeFrom: string | null;
     timeTo: string | null;
-    typeId: number | null;
+    eventTypeId: number | null;
 }
 

@@ -12,16 +12,23 @@ export default defineNuxtConfig({
     "@vee-validate/nuxt",
     "@nuxt/icon",
     "@primevue/nuxt-module",
-    "@pinia/nuxt"
+    "@pinia/nuxt",
+    'pinia-plugin-persistedstate/nuxt',
   ],
-  nitro: {
-    preset: 'node-server',
-    baseURL: '/dm',
+  imports: {
+    dirs: ["store"]
   },
+  ssr: false,
+  components: [
+    {
+      path: "~/components",
+      pathPrefix: false
+    }
+  ],
   primevue: {
     autoImport: false,
     components: {
-      include: ['DatePicker',"Dropdown"]
+      include: ['DatePicker', "Dropdown"]
     },
     options: {
       theme: {

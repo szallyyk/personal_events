@@ -14,7 +14,7 @@
           <table class="table-evenets table table-bordered">
             <thead>
               <tr>
-                <th class="table-id">ID</th>
+                <th class="table-id">Pořadí</th>
                 <th class="table-name">Název</th>
                 <th class="table-cssClass">Barva</th>
                 <th class="table-action">Akce</th>
@@ -24,75 +24,57 @@
               <tr v-for="(field, index) in fields" :key="field.key">
                 <td>
                   <Field
-                    :name="`options[${index}].id`"
-                    type="number"
+                    :name="`eventTypes[${index}].id`"
+                    type="hidden"
                     class="form-control"
                     :disabled="formDisabled"
                   />
-                  <ErrorMessage
-                    :name="`options[${index}].id`"
-                    class="text-danger"
-                  />
-                </td>
-                <td>
-                  <Field
-                    :name="`options[${index}].name`"
-                    class="form-control"
-                    type="text"
-                    :disabled="formDisabled"
-                  />
-                  <ErrorMessage
-                    :name="`options[${index}].name`"
-                    class="text-danger"
-                  />
-                </td>
-                <td>
-                  <Field
-                    :name="`options[${index}].cssClass`"
-                    v-slot="{ value, handleChange }"
-                  >
-                    <Dropdown
-                      :modelValue="value"
-                      @update:modelValue="handleChange"
-                      :options="cssClassesWithColors"
-                      optionLabel="label"
-                      optionValue="value"
-                      placeholder="Vyberte barvu"
-                      class="w-100"
+                  <div class="d-flex flex-column gap-1">
+                    <Field
+                      :name="`eventTypes[${index}].rank`"
+                      type="number"
+                      class="form-control"
                       :disabled="formDisabled"
-                    >
-                      <template #option="slotProps">
-                        <div class="d-flex align-items-center gap-2">
-                          <span
-                            class="color-indicator"
-                            :class="`event-${slotProps.option.value}`"
-                          ></span>
-                        </div>
-                      </template>
-                      <template #value="slotProps">
-                        <div
-                          v-if="slotProps.value"
-                          class="d-flex align-items-center gap-2"
-                        >
-                          <span
-                            class="color-indicator"
-                            :class="`event-${slotProps.value}`"
-                          ></span>
-                        </div>
-                        <span v-else>Vyberte barvu</span>
-                      </template>
-                    </Dropdown>
-                  </Field>
-                  <ErrorMessage
-                    :name="`options[${index}].cssClass`"
-                    class="text-danger"
-                  />
+                    />
+                    <ErrorMessage
+                      :name="`eventTypes[${index}].rank`"
+                      class="text-danger"
+                    />
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex flex-column gap-1">
+                    <Field
+                      :name="`eventTypes[${index}].name`"
+                      class="form-control"
+                      type="text"
+                      :disabled="formDisabled"
+                    />
+                    <ErrorMessage
+                      :name="`eventTypes[${index}].name`"
+                      class="text-danger"
+                    />
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex flex-column gap-1">
+                    <Field
+                      :name="`eventTypes[${index}].hexColor`"
+                      type="color"
+                      class="form-control form-control-color p-0 border-0"
+                      :disabled="formDisabled"
+                    />
+                    <ErrorMessage
+                      :name="`eventTypes[${index}].hexColor`"
+                      class="text-danger"
+                    />
+                  </div>
                 </td>
                 <td>
                   <button
                     type="button"
                     class="btn btn-primary d-flex align-items-center justify-content-center"
-                    @click="push({ id: '', name: '', cssClass: '' })"
+                    @click="push({ id: '', rank: '', name: '', hexColor: '' })"
                     :disabled="formDisabled"
                   >
                     <Icon name="mdi:plus" />
@@ -118,7 +100,9 @@
                     <button
                       type="button"
                       class="btn btn-primary d-flex align-items-center justify-content-center"
-                      @click="push({ id: '', name: '', cssClass: '' })"
+                      @click="
+                        push({ id: '', rank: '', name: '', hexColor: '' })
+                      "
                       :disabled="formDisabled"
                     >
                       <Icon name="mdi:plus" />
@@ -147,10 +131,13 @@
 </template>
 
 <script setup lang="ts">
-import Dropdown from "primevue/dropdown";
 import { useForm, useFieldArray, Field, ErrorMessage } from "vee-validate";
 
 const props = defineProps({
+  formErrors: {
+    type: Object,
+    default: () => ({}),
+  },
   initialOptions: {
     type: Array,
     default: () => [],
@@ -162,22 +149,13 @@ const emit = defineEmits(["submit", "delete", "change"]);
 const isSaving = ref(false);
 const formDisabled = ref(false);
 
-const cssClassesWithColors = [
-  { value: "indigo", label: "Modrá" },
-  { value: "danger", label: "Červená" },
-  { value: "success", label: "Zelená" },
-  { value: "warning", label: "Žlutá" },
-  { value: "primary", label: "Modrá" },
-  { value: "pink", label: "Růžová" },
-];
-
-const { values, handleSubmit } = useForm({
+const { values, handleSubmit, setErrors } = useForm({
   initialValues: {
-    options: props.initialOptions || [],
+    eventTypes: props.initialOptions || [],
   },
 });
 
-const { fields, push, remove } = useFieldArray("options");
+const { fields, push, remove } = useFieldArray("eventTypes");
 
 // Sledování změn
 watch(
@@ -191,10 +169,11 @@ watch(
 
 const onSubmit = handleSubmit((formValues) => {
   const sendData = {
-    options: formValues.options.map((r: any) => ({
+    eventTypes: formValues.eventTypes.map((r: any) => ({
       id: r.id,
+      rank: r.rank,
       name: r.name,
-      cssClass: r.cssClass,
+      hexColor: r.hexColor,
     })),
   };
   emit("submit", sendData);
@@ -210,6 +189,14 @@ function disableForm() {
 function enableForm() {
   formDisabled.value = false;
 }
+
+const { watchAndSetErrors } = useFormErrorTransformer();
+
+watchAndSetErrors(
+  () => props.formErrors,
+  setErrors,
+  "eventTypes", // název tvého array fieldu
+);
 
 defineExpose({
   disableForm,

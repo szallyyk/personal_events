@@ -25,92 +25,102 @@
             <tbody>
               <tr v-for="(field, index) in fields" :key="field.key">
                 <td>
-                  <Field
-                    :name="`regularity[${index}].dayName`"
-                    as="select"
-                    class="form-control"
-                    :disabled="formDisabled"
-                  >
-                    <option value="" disabled>Vyberte den</option>
-                    <option
-                      v-for="day in days"
-                      :key="day.id"
-                      :value="day.value"
-                    >
-                      {{ day.name }}
-                    </option>
-                  </Field>
-                  <ErrorMessage
-                    :name="`regularity[${index}].dayName`"
-                    class="text-danger"
-                  />
-                </td>
-                <td>
-                  <Field
-                    :name="`regularity[${index}].dateFrom`"
-                    v-slot="{ value, handleChange }"
-                  >
-                    <DatePicker
-                      :modelValue="value"
-                      @update:modelValue="handleChange"
-                      class="w-100"
-                      hour-format="24"
-                      :step-minute="15"
-                      :time-only="true"
-                      :show-time="true"
-                      :show-seconds="false"
-                      placeholder="Vybrat čas"
+                  <div class="d-flex flex-column gap-1">
+                    <Field
+                      :name="`regularities[${index}].id`"
+                      type="hidden"
+                      class="form-control"
                       :disabled="formDisabled"
                     />
-                  </Field>
-                  <ErrorMessage
-                    :name="`regularity[${index}].dateFrom`"
-                    class="text-danger"
-                  />
-                </td>
-                <td>
-                  <Field
-                    :name="`regularity[${index}].dateTo`"
-                    v-slot="{ value, handleChange }"
-                  >
-                    <DatePicker
-                      :modelValue="value"
-                      @update:modelValue="handleChange"
-                      class="w-100"
-                      hour-format="24"
-                      :step-minute="15"
-                      :time-only="true"
-                      :show-time="true"
-                      :show-seconds="false"
-                      placeholder="Vybrat čas"
+                    <Field
+                      :name="`regularities[${index}].dayNumber`"
+                      as="select"
+                      class="form-control"
                       :disabled="formDisabled"
+                    >
+                      <option value="" disabled>Vyberte den</option>
+                      <option v-for="day in days" :key="day.id" :value="day.id">
+                        {{ day.name }}
+                      </option>
+                    </Field>
+                    <ErrorMessage
+                      :name="`regularities[${index}].dayNumber`"
+                      class="text-danger"
                     />
-                  </Field>
-                  <ErrorMessage
-                    :name="`regularity[${index}].dateTo`"
-                    class="text-danger"
-                  />
+                  </div>
                 </td>
                 <td>
-                  <Field
-                    as="select"
-                    :name="`regularity[${index}].typeId`"
-                    class="form-control"
-                    :disabled="formDisabled"
-                  >
-                    <option value="" disabled>Vyberte typ</option>
-                    <option
-                      v-for="type in eventTypes"
-                      :key="type.id"
-                      :value="type.id"
+                  <div class="d-flex flex-column gap-1">
+                    <Field
+                      :name="`regularities[${index}].timeFrom`"
+                      v-slot="{ value, handleChange }"
                     >
-                      {{ type.name }}
-                    </option>
-                  </Field>
-                  <ErrorMessage
-                    :name="`regularity[${index}].typeId`"
-                    class="text-danger"
-                  />
+                      <DatePicker
+                        :modelValue="value"
+                        @update:modelValue="handleChange"
+                        class="w-100"
+                        hour-format="24"
+                        :step-minute="15"
+                        :time-only="true"
+                        :show-time="true"
+                        :show-seconds="false"
+                        placeholder="Vybrat čas"
+                        :disabled="formDisabled"
+                      />
+                    </Field>
+                    <ErrorMessage
+                      :name="`regularities[${index}].timeFrom`"
+                      class="text-danger"
+                    />
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex flex-column gap-1">
+                    <Field
+                      :name="`regularities[${index}].timeTo`"
+                      v-slot="{ value, handleChange }"
+                    >
+                      <DatePicker
+                        :modelValue="value"
+                        @update:modelValue="handleChange"
+                        class="w-100"
+                        hour-format="24"
+                        :step-minute="15"
+                        :time-only="true"
+                        :show-time="true"
+                        :show-seconds="false"
+                        placeholder="Vybrat čas"
+                        :disabled="formDisabled"
+                      />
+                    </Field>
+                    <ErrorMessage
+                      :name="`regularities[${index}].timeTo`"
+                      class="text-danger"
+                    />
+                  </div>
+                </td>
+                <td>
+                  <div class="d-flex flex-column gap-1">
+                    <Field
+                      as="select"
+                      :name="`regularities[${index}].eventTypeId`"
+                      class="form-control"
+                      :disabled="formDisabled"
+                    >
+                      <option value="" disabled>Vyberte typ</option>
+                      <option
+                        v-for="type in eventTypes"
+                        :key="type.id"
+                        :value="type.id"
+                      >
+                        {{ type.name }}
+                      </option>
+                    </Field>
+                    <ErrorMessage
+                      :name="`regularities[${index}].eventTypeId`"
+                      class="text-danger"
+                    />
+                  </div>
                 </td>
                 <td>
                   <button
@@ -118,10 +128,11 @@
                     class="btn btn-primary d-flex align-items-center justify-content-center"
                     @click="
                       push({
-                        dayName: '',
-                        dateFrom: '',
-                        dateTo: '',
-                        typeId: '',
+                        id: null,
+                        dayNumber: '',
+                        timeFrom: '',
+                        timeTo: '',
+                        eventTypeId: '',
                       })
                     "
                     :disabled="formDisabled"
@@ -151,10 +162,11 @@
                       class="btn btn-primary d-flex align-items-center justify-content-center"
                       @click="
                         push({
-                          dayName: '',
-                          dateFrom: '',
-                          dateTo: '',
-                          typeId: '',
+                          id: null,
+                          dayNumber: '',
+                          timeFrom: '',
+                          timeTo: '',
+                          eventTypeId: '',
                         })
                       "
                       :disabled="formDisabled"
@@ -189,6 +201,10 @@ import DatePicker from "primevue/datepicker";
 import { useForm, useFieldArray, Field, ErrorMessage } from "vee-validate";
 
 const props = defineProps({
+  formErrors: {
+    type: Object,
+    default: () => ({}),
+  },
   initialRegularity: {
     type: Array,
     default: () => [],
@@ -214,13 +230,13 @@ const days = [
   { id: 6, name: "Neděle", value: "sunday" },
 ];
 
-const { values, handleSubmit } = useForm({
+const { values, handleSubmit, setErrors } = useForm({
   initialValues: {
-    regularity: props.initialRegularity || [],
+    regularities: props.initialRegularity || [],
   },
 });
 
-const { fields, push, remove } = useFieldArray("regularity");
+const { fields, push, remove } = useFieldArray("regularities");
 
 // Sledování změn
 watch(
@@ -234,11 +250,12 @@ watch(
 
 const onSubmit = handleSubmit((formValues) => {
   const sendData = {
-    regularity: formValues.regularity.map((r: any) => ({
-      dayName: r.dayName,
-      dateFrom: r.dateFrom ? formatTime(r.dateFrom) : null,
-      dateTo: r.dateTo ? formatTime(r.dateTo) : null,
-      typeId: r.typeId || null,
+    regularities: formValues.regularities.map((r: any) => ({
+      id: r.id || null,
+      dayNumber: r.dayNumber,
+      timeFrom: r.timeFrom ? formatTime(r.timeFrom) : null,
+      timeTo: r.timeTo ? formatTime(r.timeTo) : null,
+      eventTypeId: r.eventTypeId || null,
     })),
   };
   emit("submit", sendData);
@@ -254,6 +271,13 @@ function disableForm() {
 function enableForm() {
   formDisabled.value = false;
 }
+const { watchAndSetErrors } = useFormErrorTransformer();
+
+watchAndSetErrors(
+  () => props.formErrors,
+  setErrors,
+  "regularities", // název tvého array fieldu
+);
 
 defineExpose({
   disableForm,
