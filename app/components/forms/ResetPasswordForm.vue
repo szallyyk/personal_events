@@ -7,19 +7,7 @@
     :validation-schema="schema"
   >
     <div class="col-lg-12">
-      <label for="oldPassword" class="form-label">Staré Heslo</label>
-      <Field
-        id="oldPassword"
-        name="oldPassword"
-        type="password"
-        class="form-control"
-        :class="{ 'is-invalid': errors.oldPassword }"
-        placeholder="Zadejte staré heslo"
-      />
-      <ErrorMessage name="oldPassword" class="invalid-feedback" />
-    </div>
-    <div class="col-lg-12">
-      <label for="password" class="form-label">Nové heslo</label>
+      <label for="password" class="form-label">Heslo</label>
       <Field
         id="password"
         name="password"
@@ -31,25 +19,19 @@
       <ErrorMessage name="password" class="invalid-feedback" />
     </div>
     <div class="col-lg-12">
-      <label for="repassword" class="form-label">Potvrzení nového hesla</label>
+      <label for="repassword" class="form-label"> Potvrzení hesla </label>
       <Field
         id="repassword"
         name="repassword"
         type="password"
         class="form-control"
         :class="{ 'is-invalid': errors.repassword }"
-        placeholder="Zadejte heslo"
+        placeholder="Zadejte heslo znovu"
       />
       <ErrorMessage name="repassword" class="invalid-feedback" />
     </div>
-    <div class="d-flex justify-content-end">
-      <button
-        type="submit"
-        class="btn btn-success d-flex align-items-center gap-2"
-      >
-        <Icon name="mdi:content-save-outline" />
-        Uložit
-      </button>
+    <div class="d-flex">
+      <button type="submit" class="btn btn-primary w-100">Obnovit heslo</button>
     </div>
   </Form>
 </template>
@@ -64,12 +46,11 @@ const props = defineProps<{
 const formRef = ref<typeof Form>();
 
 const schema = yup.object({
-  oldPassword: yup.string().required("Staré heslo je povinné"),
-  password: yup.string().required("Nové heslo je povinné"),
+  password: yup.string().required("Heslo je povinné"),
   repassword: yup
     .string()
+    .required("Potvrzení hesla je povinné")
     .oneOf([yup.ref("password")], "Hesla se neshodují")
-    .required("Potvrzení nového hesla je povinné")
 });
 
 const emit = defineEmits(["submit"]);
@@ -87,14 +68,4 @@ watch(
   },
   { deep: true }
 );
-
-function resetForm() {
-  if (formRef.value) {
-    formRef.value.resetForm();
-  }
-}
-
-defineExpose({
-  resetForm
-});
 </script>

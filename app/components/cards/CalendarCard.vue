@@ -3,13 +3,34 @@
     <span class="calendar-name">{{ calendar.name }}</span>
 
     <div class="calendar-actions">
-      <button class="btn btn-warning" @click="settingsCalendar()">
-        Nastavení
+      <button
+        class="btn btn-warning d-flex align-items-center gap-1"
+        @click="settingsCalendar()"
+      >
+        <Icon name="mdi:cog-outline" />
+        Správa
       </button>
-      <button class="btn btn-secondary" @click="detailCalendar()">
-        Detail
+      <button
+        class="btn btn-secondary d-flex align-items-center gap-1"
+        @click="detailCalendar()"
+      >
+        <Icon name="mdi:eye-outline" />
+        Zobrazit
       </button>
-      <!-- <button class="btn btn-primary" @click="editCalendar()">Upravit</button> -->
+      <button
+        class="btn btn-primary d-flex align-items-center gap-1"
+        @click="editCalendar()"
+      >
+        <Icon name="mdi:pencil-outline" />
+        Upravit
+      </button>
+      <button
+        class="btn btn-danger d-flex align-items-center gap-1"
+        @click="deleteCalendar()"
+      >
+        <Icon name="mdi:trash-can-outline" />
+        Smazat
+      </button>
     </div>
   </div>
 </template>
@@ -62,6 +83,7 @@ h2 {
 
 .calendar-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -69,5 +91,12 @@ h2 {
   text-align: center;
   color: #6c757d;
   padding: 40px;
+}
+@media screen and (max-width: 768px) {
+  .calendar-item {
+    align-items: start;
+    flex-direction: column;
+    row-gap: 10px;
+  }
 }
 </style>

@@ -2,7 +2,7 @@
   <div class="card">
     <div class="card-header">
       <div class="row">
-        <h3>Správa typů událostí</h3>
+        <h3>Typy událostí</h3>
       </div>
     </div>
     <div class="card-body px-1">
@@ -132,16 +132,19 @@
 
 <script setup lang="ts">
 import { useForm, useFieldArray, Field, ErrorMessage } from "vee-validate";
+import * as yup from "yup";
+
+const { alert } = useToastStore();
 
 const props = defineProps({
   formErrors: {
     type: Object,
-    default: () => ({}),
+    default: () => ({})
   },
   initialOptions: {
     type: Array,
-    default: () => [],
-  },
+    default: () => []
+  }
 });
 
 const emit = defineEmits(["submit", "delete", "change"]);
@@ -149,10 +152,25 @@ const emit = defineEmits(["submit", "delete", "change"]);
 const isSaving = ref(false);
 const formDisabled = ref(false);
 
+const schema = yup.object({
+  eventTypes: yup.array().of(
+    yup.object({
+      id: yup.string().nullable(),
+      rank: yup.string().required("Pořadí je povinné"),
+      name: yup.string().required("Název je povinný"),
+      hexColor: yup
+        .string()
+        .matches(/^#([0-9A-F]{3}){1,2}$/i, "Neplatný formát barvy")
+        .required("Barva je povinná")
+    })
+  )
+});
+
 const { values, handleSubmit, setErrors } = useForm({
   initialValues: {
-    eventTypes: props.initialOptions || [],
+    eventTypes: props.initialOptions || []
   },
+  validationSchema: schema
 });
 
 const { fields, push, remove } = useFieldArray("eventTypes");
@@ -164,7 +182,7 @@ watch(
     let emitOption = { name: "option", isEdit: true };
     emit("change", emitOption);
   },
-  { deep: true },
+  { deep: true }
 );
 
 const onSubmit = handleSubmit((formValues) => {
@@ -173,14 +191,20 @@ const onSubmit = handleSubmit((formValues) => {
       id: r.id,
       rank: r.rank,
       name: r.name,
-      hexColor: r.hexColor,
-    })),
+      hexColor: r.hexColor
+    }))
   };
   emit("submit", sendData);
 });
 
 function handleDelete(index: number) {
-  emit("delete", index);
+  if (fields.value.length === 1 || fields.value.length < 0) {
+    alert("Musí zde být alespoň jeden typ události.", "error");
+    return;
+  } else {
+    remove(index);
+  }
+  // emit("delete", index);
 }
 
 function disableForm() {
@@ -195,12 +219,12 @@ const { watchAndSetErrors } = useFormErrorTransformer();
 watchAndSetErrors(
   () => props.formErrors,
   setErrors,
-  "eventTypes", // název tvého array fieldu
+  "eventTypes" // název tvého array fieldu
 );
 
 defineExpose({
   disableForm,
-  enableForm,
+  enableForm
 });
 </script>
 <style scoped>

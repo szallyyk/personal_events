@@ -4,7 +4,8 @@
       <h2>Moje kalendáře</h2>
       <button
         class="btn btn-primary d-flex align-items-center gap-2"
-        @click="openItemModal"
+        @click="handleAdd"
+        :disabled="calendars.length >= 2"
       >
         <Icon name="mdi:plus-circle" />
         Nový kalendář
@@ -19,6 +20,7 @@
           @edit="handleEdit(item)"
           @settings="handleSettings(item)"
           @detail="handleDetail(item)"
+          @delete="openDeleteModal(item)"
         />
       </template>
       <template v-else>
@@ -32,13 +34,21 @@
     <ItemModal
       :is-open="modalStore.itemModalVisible"
       @close="closeItemModal"
-      title="Vytvořit nový kalendář"
+      :title="modalTitle"
     >
       <CalendarForm
         @submit="addCalendar"
         @close="closeItemModal"
+        :data="calendarDetail"
       ></CalendarForm>
     </ItemModal>
+  </TransitionFade>
+  <TransitionFade>
+    <ConfirmModal
+      v-if="modalStore.confirmModalVisible"
+      @confirm="handleDeleteConfirm"
+      @close="closeDeleteModal"
+    />
   </TransitionFade>
 </template>
 
@@ -57,9 +67,14 @@ interface Calendar {
   slug: string;
 }
 
+const deleteSlug = ref<string | null>(null);
+
 const isLoading = ref(true);
 
+const modalTitle = ref("Vytvořit nový kalendář");
+const isEditing = ref(false);
 const calendars = ref<Calendar[]>([]);
+const calendarDetail = ref<any>(null);
 
 const { getWeekRangeFormatted } = useWeekRange();
 
@@ -78,11 +93,42 @@ async function getCalendars() {
 }
 
 function handleEdit(calendar: Calendar) {
+  modalTitle.value = "Upravit kalendář";
+  isEditing.value = true;
   getDetailCalendar(calendar.slug);
+}
+
+function handleAdd() {
+  modalTitle.value = "Vytvořit nový kalendář";
+  isEditing.value = false;
+  calendarDetail.value = null;
+  openItemModal();
 }
 
 function handleSettings(calendar: Calendar) {
   navigateTo(`/sprava/${calendar.slug}`);
+}
+
+function openDeleteModal(calendar: Calendar) {
+  deleteSlug.value = calendar.slug;
+  modalStore.confirmModalVisible = true;
+}
+
+function closeDeleteModal() {
+  modalStore.confirmModalVisible = false;
+  deleteSlug.value = null;
+}
+
+async function handleDeleteConfirm() {
+  try {
+    const response = await $api.delete(`/calendars/${deleteSlug.value}`);
+    alert(response.data.message, "success");
+    getCalendars();
+    closeDeleteModal();
+  } catch (err) {
+    const { message, errors } = parseApiError(err);
+    alert(message, "error");
+  }
 }
 
 function closeItemModal() {
@@ -93,10 +139,13 @@ function openItemModal() {
   modalStore.itemModalVisible = !modalStore.itemModalVisible;
 }
 
-async function getDetailCalendar(id: number) {
+async function getDetailCalendar(slug: string) {
   try {
-    const response = await $api.get(`/calendars/${id}`);
-    return response.data.data.calendar;
+    const response = await $api.get(
+      `/calendars/${slug}?dateFrom=${monday}&dateTo=${sunday}`
+    );
+    calendarDetail.value = response.data.data.calendar;
+    openItemModal();
   } catch (err) {
     const { message, errors } = parseApiError(err);
     alert(message, "error");
@@ -112,28 +161,42 @@ async function addCalendar(data: {
   description: string;
   infoDescription: string;
 }) {
-  try {
-    const response = await $api.post("/calendars", data);
-    alert(response.data.message, "success");
-    getCalendars();
-    closeItemModal();
-  } catch (err) {
-    const { message, errors } = parseApiError(err);
-
-    alert(message, "error");
+  if (isEditing.value) {
+    try {
+      const response = await $api.put(
+        `/calendars/${calendarDetail.value.slug}`,
+        data
+      );
+      alert(response.data.message, "success");
+      getCalendars();
+      closeItemModal();
+    } catch (err) {
+      const { message, errors } = parseApiError(err);
+      alert(message, "error");
+    }
+  } else {
+    try {
+      const response = await $api.post("/calendars", data);
+      alert(response.data.message, "success");
+      getCalendars();
+      closeItemModal();
+    } catch (err) {
+      const { message, errors } = parseApiError(err);
+      alert(message, "error");
+    }
   }
 }
 
-onMounted(() => {
-  getCalendars();
+onMounted(async () => {
+  await getCalendars();
 });
 
 useHead({
-  title: "Přehled kalendářů",
+  title: "Přehled kalendářů"
 });
 
 definePageMeta({
-  layout: "admin",
+  layout: "admin"
 });
 </script>
 

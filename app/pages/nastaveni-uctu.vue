@@ -9,6 +9,7 @@
           </div>
           <div class="card-body">
             <SettingPasswordForm
+              ref="settingPassRef"
               @submit="handleChangePassword"
               :formErrors="changePasswordFormErrors"
             />
@@ -22,6 +23,7 @@
           </div>
           <div class="card-body">
             <SettingEmailForm
+              ref="settingEmailRef"
               @submit="handleChangeEmail"
               :formErrors="changeEmailFormErrors"
             />
@@ -38,6 +40,9 @@ const { alert } = useToastStore();
 const changeEmailFormErrors = ref<Record<string, string[]>>({});
 const changePasswordFormErrors = ref<Record<string, string[]>>({});
 
+const settingPassRef = ref();
+const settingEmailRef = ref();
+
 async function handleChangePassword(data: {
   oldPassword: string;
   password: string;
@@ -46,6 +51,7 @@ async function handleChangePassword(data: {
   try {
     const response = await $api.put("/accounts/me/passwords", data);
     alert(response.data.message, "success");
+    settingPassRef.value.resetForm();
   } catch (err) {
     const { message, errors } = parseApiError(err);
     changePasswordFormErrors.value = errors || {};
@@ -57,6 +63,7 @@ async function handleChangeEmail(data: { email: string }) {
   try {
     const response = await $api.put("/accounts/me/email", data);
     alert(response.data.message, "success");
+    settingEmailRef.value.resetForm();
   } catch (err) {
     const { message, errors } = parseApiError(err);
     changeEmailFormErrors.value = errors || {};
@@ -65,10 +72,10 @@ async function handleChangeEmail(data: { email: string }) {
 }
 
 definePageMeta({
-  layout: "admin",
+  layout: "admin"
 });
 
 useHead({
-  title: "Nastavení účtu",
+  title: "Nastavení účtu"
 });
 </script>

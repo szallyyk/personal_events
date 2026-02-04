@@ -3,7 +3,7 @@
     <div class="card-header">
       <div class="row">
         <h3>
-          Správa událostí /
+          Události /
           <nuxt-link to="/" target="_blank" class="text-under-line">
             Zobrazit kalendář
           </nuxt-link>
@@ -139,7 +139,7 @@
                         date: '',
                         timeFrom: '',
                         timeTo: '',
-                        eventTypeId: '',
+                        eventTypeId: ''
                       })
                     "
                     :disabled="formDisabled"
@@ -173,7 +173,7 @@
                           date: '',
                           timeFrom: '',
                           timeTo: '',
-                          eventTypeId: '',
+                          eventTypeId: ''
                         })
                       "
                       :disabled="formDisabled"
@@ -206,20 +206,21 @@
 <script setup lang="ts">
 import DatePicker from "primevue/datepicker";
 import { useForm, useFieldArray, Field, ErrorMessage } from "vee-validate";
+import * as yup from "yup";
 
 const props = defineProps({
   formErrors: {
     type: Object,
-    default: () => ({}),
+    default: () => ({})
   },
   initialEvents: {
     type: Array,
-    default: () => [],
+    default: () => []
   },
   eventTypes: {
     type: Array,
-    default: () => [],
-  },
+    default: () => []
+  }
 });
 
 const emit = defineEmits(["submit", "delete", "change"]);
@@ -227,10 +228,22 @@ const emit = defineEmits(["submit", "delete", "change"]);
 const isSaving = ref(false);
 const formDisabled = ref(false);
 
+const schema = yup.object({
+  events: yup.array().of(
+    yup.object({
+      date: yup.string().required("Datum je povinné"),
+      timeFrom: yup.string().required("Čas od je povinný"),
+      timeTo: yup.string().required("Čas do je povinný"),
+      eventTypeId: yup.string().required("Typ události je povinný")
+    })
+  )
+});
+
 const { values, handleSubmit, setErrors } = useForm({
   initialValues: {
-    events: props.initialEvents || [],
+    events: props.initialEvents || []
   },
+  validationSchema: schema
 });
 
 const { fields, push, remove } = useFieldArray("events");
@@ -241,7 +254,7 @@ watch(
     let emitOption = { name: "events", isEdit: true };
     emit("change", emitOption);
   },
-  { deep: true },
+  { deep: true }
 );
 
 const onSubmit = handleSubmit((formValues) => {
@@ -251,15 +264,21 @@ const onSubmit = handleSubmit((formValues) => {
       date: e.date ? formatDate(e.date) : null,
       timeFrom: e.timeFrom ? formatTime(e.timeFrom) : null,
       timeTo: e.timeTo ? formatTime(e.timeTo) : null,
-      eventTypeId: e.eventTypeId || null,
-    })),
+      eventTypeId: e.eventTypeId || null
+    }))
   };
   emit("submit", sendData);
 });
 
 function handleDelete(index: number) {
-  emit("delete", index);
+  remove(index);
+  // emit("delete", index);
 }
+
+function resetToInitialValues() {
+  values.events = props.initialEvents || [];
+}
+
 function disableForm() {
   formDisabled.value = true;
 }
@@ -272,11 +291,11 @@ const { watchAndSetErrors } = useFormErrorTransformer();
 watchAndSetErrors(
   () => props.formErrors,
   setErrors,
-  "events", // název tvého array fieldu
+  "events" // název tvého array fieldu
 );
 
 defineExpose({
   disableForm,
-  enableForm,
+  enableForm
 });
 </script>

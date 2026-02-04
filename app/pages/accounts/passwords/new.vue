@@ -8,16 +8,26 @@
           <template v-if="!isLoading">
             <div v-if="isValid" class="card shadow">
               <div class="card-body p-4">
-                <h2 class="card-title mb-3 text-center">Aktivace účtu</h2>
-                <p>Váš účet byl úspěšně aktivován. Nyní se můžete přihlásit.</p>
-                <div class="d-flex flex-column">
-                  <button
-                    @click="navigateTo('/prihlaseni')"
-                    class="btn btn-primary w-100"
-                  >
-                    Přejít na přihlášení
-                  </button>
-                </div>
+                <template v-if="!passwordSended">
+                  <h2 class="card-title mb-3 text-center">Obnovení hesla</h2>
+                  <div class="d-flex flex-column">
+                    <ResetPasswordForm @submit="resetPassword" />
+                  </div>
+                </template>
+                <template v-else>
+                  <h2 class="card-title mb-3 text-center">Obnovení hesla</h2>
+                  <p>
+                    Vaše heslo bylo úspěšně změněno. Nyní se můžete přihlásit.
+                  </p>
+                  <div class="d-flex flex-column">
+                    <button
+                      @click="navigateTo('/prihlaseni')"
+                      class="btn btn-primary w-100"
+                    >
+                      Přejít na přihlášení
+                    </button>
+                  </div>
+                </template>
               </div>
             </div>
             <div v-else>
@@ -49,16 +59,18 @@ const routeParams = ref({
 
 const isLoading = ref(true);
 const isValid = ref(false);
+const passwordSended = ref(false);
 
-async function activateProfile() {
+async function resetPassword(values: { password: string; repassword: string }) {
   try {
-    const response = await $api.post("/accounts/activate", {
+    const response = await $api.post("/accounts/passwords/new", {
       userId: routeParams.value.userId,
-      process: routeParams.value.process
+      process: routeParams.value.process,
+      ...values
     });
     if (response.status === 200) {
       alert(response.data.message, "success");
-      isValid.value = true;
+      passwordSended.value = true;
     }
   } catch (err) {
     const { message } = parseApiError(err);
@@ -68,13 +80,13 @@ async function activateProfile() {
 
 async function checkActivation() {
   try {
-    const response = await $api.post("/accounts/activate/check", {
+    const response = await $api.post("/accounts/passwords/new/check", {
       userId: routeParams.value.userId,
       process: routeParams.value.process
     });
     if (response.status === 200) {
       alert(response.data.message, "success");
-      activateProfile();
+      isValid.value = true;
     } else {
       isValid.value = false;
     }
@@ -88,7 +100,7 @@ async function checkActivation() {
 
 onMounted(() => {
   if (
-    routeParams.value.process === "activate_account" ||
+    routeParams.value.process === "verify_password_reset" ||
     routeParams.value.email ||
     routeParams.value.userId ||
     routeParams.value.process
@@ -101,6 +113,6 @@ onMounted(() => {
 });
 
 useHead({
-  title: "Aktivace účtu"
+  title: "Obnovení hesla"
 });
 </script>

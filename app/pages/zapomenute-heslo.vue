@@ -35,7 +35,6 @@
 <script setup lang="ts">
 const { $api } = useNuxtApp();
 const { alert } = useToastStore();
-const userStore = useUserStore();
 
 const forgottenPasswordFormErrors = ref<Record<string, string[]>>({});
 const isSuccess = ref(false);
@@ -43,7 +42,6 @@ const isSuccess = ref(false);
 async function forgottenPassword(data: { email: string }) {
   try {
     const response = await $api.post("/accounts/passwords/reset", data);
-    userStore.setUser(response.data.data.user);
     alert(response.data.message, "success");
     isSuccess.value = true;
   } catch (err) {
@@ -54,6 +52,6 @@ async function forgottenPassword(data: { email: string }) {
 }
 
 useHead({
-  title: "Zapomenuté heslo",
+  title: "Zapomenuté heslo"
 });
 </script>

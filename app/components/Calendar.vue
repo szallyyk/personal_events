@@ -15,6 +15,13 @@
     <div class="row mt-3">
       <div class="col-lg-12">
         <ul class="list-unstyled legend-list">
+          <li>
+            <span
+              class="legend-dot"
+              :style="{ backgroundColor: '#10b981' }"
+            ></span>
+            bez udalostí
+          </li>
           <li v-for="eventType in uniqueEventTypes" :key="eventType.id">
             <span
               class="legend-dot"
@@ -24,6 +31,11 @@
           </li>
         </ul>
       </div>
+    </div>
+    <div>
+      <p class="fst-italic">
+        {{ calendarInfo ? calendarInfo.infoDescription : "" }}
+      </p>
     </div>
   </div>
 </template>
@@ -42,11 +54,23 @@ const router = useRouter();
 const { $api } = useNuxtApp();
 const { alert } = useToastStore();
 
+const { getWeekRangeFormatted } = useWeekRange();
+
+const { monday, sunday } = getWeekRangeFormatted();
+
+const isRouteParams = computed(() => {
+  if (route.query.dateFrom && route.query.dateTo) {
+    return true;
+  }
+  return false;
+});
+
 // Data z API
+let isFetching = false;
 const calendarData = ref([]); // eventsAndRegularities
 const name = ref("");
 const isLoaded = ref(false);
-
+const calendarInfo = ref(null);
 const calendarRef = ref(null);
 
 // Extrahuj unikátní typy eventů pro legendu
@@ -108,41 +132,52 @@ function getInitialDate() {
 function updateQueryParams(startDate, endDate) {
   const dateFrom = formatDateToCzech(startDate);
   const dateTo = formatDateToCzech(endDate);
-
-  router.replace({
-    query: {
-      ...route.query,
-      dateFrom,
-      dateTo,
-    },
-  });
+  if (isRouteParams.value) {
+    router.replace({
+      query: {
+        ...route.query,
+        dateFrom,
+        dateTo
+      }
+    });
+  }
 }
 
 // Fetch dat z BE
 async function fetchData(dateFrom, dateTo) {
+  if (isFetching) return;
+  isFetching = true;
   try {
-    const queryParams = new URLSearchParams();
-    if (dateFrom) queryParams.append("dateFrom", dateFrom);
-    if (dateTo) queryParams.append("dateTo", dateTo);
-
-    const url = `/calendars/${route.params.slug}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+    let url;
+    if (isRouteParams.value) {
+      const queryParams = new URLSearchParams();
+      if (dateFrom) queryParams.append("dateFrom", dateFrom);
+      if (dateTo) queryParams.append("dateTo", dateTo);
+      url = `/calendars/${route.params.slug}${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+    } else {
+      url = `/calendars/${route.params.slug}?dateFrom=${dateFrom}&dateTo=${dateTo}`;
+    }
 
     const response = await $api.get(url);
     const data = response.data.data.calendar;
 
     calendarData.value = data.eventsAndRegularities;
+    calendarInfo.value = data;
     name.value = data.name;
 
     isLoaded.value = true;
   } catch (error) {
     console.error("Chyba při načítání:", error);
     isLoaded.value = true;
+  } finally {
+    isFetching = false;
   }
 }
 
 onMounted(async () => {
-  const dateFrom = route.query.dateFrom || null;
-  const dateTo = route.query.dateTo || null;
+  await nextTick();
+  const dateFrom = route.query.dateFrom || monday;
+  const dateTo = route.query.dateTo || sunday;
   await fetchData(dateFrom, dateTo);
 });
 
@@ -159,15 +194,15 @@ function generateEvents() {
       if (day.dayInWeekNumber <= 5) {
         allEvents.push({
           id: `empty-${dateStr}`,
-          title: "Volno",
+          title: "bez udalostí",
           start: `${dateStr}T00:00:00`,
           end: `${dateStr}T23:59:59`,
           classNames: ["event-empty"],
           extendedProps: {
             isEmpty: true,
             hexColor: "#10b981",
-            typeName: "",
-          },
+            typeName: ""
+          }
         });
       }
     } else {
@@ -185,8 +220,8 @@ function generateEvents() {
             typeName: record.eventType.name,
             hexColor: record.eventType.hexColor,
             baseType: record.baseType,
-            isEmpty: false,
-          },
+            isEmpty: false
+          }
         });
       });
     }
@@ -214,18 +249,27 @@ const calendarOptions = ref({
     month: "Měsíc",
     week: "Týden",
     day: "Den",
-    list: "Týden",
+    list: "Týden"
   },
   headerToolbar: {
-    left: "secondTitle",
+    left: "secondTitle description",
     center: "title",
-    right: "prev,next",
+    right: "prev,next"
   },
   customButtons: {
     secondTitle: {
-      text: computed(() => `Přehled dostupnosti - ${name.value}`),
-      click: function () {},
+      text: computed(
+        () =>
+          `Přehled dostupnosti - ${calendarInfo.value ? calendarInfo.value.namePublic : ""}`
+      ),
+      click: function () {}
     },
+    description: {
+      text: computed(
+        () => `${calendarInfo.value ? calendarInfo.value.description : ""}`
+      ),
+      click: function () {}
+    }
   },
   datesSet: async function (info) {
     var today = new Date();
@@ -259,7 +303,7 @@ const calendarOptions = ref({
   selectable: true,
   events: [],
   eventClick: handleEventClick,
-  dateClick: handleDateSelect,
+  dateClick: handleDateSelect
 });
 
 // Watch pro aktualizaci eventů když se změní data
@@ -308,7 +352,10 @@ watch(
 }
 
 :deep(.fc) {
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
 }
 
 :deep(.fc-toolbar-title) {
@@ -347,6 +394,16 @@ watch(
   font-weight: 500;
   padding: 0 !important;
 }
+:deep(.fc-description-button) {
+  background: none !important;
+  border: none !important;
+  color: inherit !important;
+  cursor: default !important;
+  font-size: 16px;
+  font-weight: 400;
+  padding: 0 !important;
+  margin-left: 0px !important;
+}
 
 :deep(.fc-secondTitle-button:hover) {
   background: none !important;
@@ -357,7 +414,6 @@ watch(
 :deep(.fc-list-event-dot) {
   display: none !important;
 }
-
 
 @media only screen and (max-width: 578px) {
   :deep(.fc-toolbar) {

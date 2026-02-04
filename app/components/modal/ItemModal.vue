@@ -27,6 +27,8 @@ const props = defineProps<{
   isOpen: boolean;
   title: string;
 }>();
+
+
 </script>
 
 <style lang="scss" scoped>

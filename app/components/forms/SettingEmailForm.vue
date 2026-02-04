@@ -59,4 +59,14 @@ watch(
   },
   { deep: true },
 );
+
+function resetForm() {
+  if (formRef.value) {
+    formRef.value.resetForm();
+  }
+}
+
+defineExpose({
+  resetForm
+});
 </script>

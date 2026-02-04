@@ -8,7 +8,7 @@
 import "@morev/vue-transitions/styles";
 
 useHead({
-  titleTemplate: "%s - Personal Events",
+  titleTemplate: "%s - Personal Events"
 });
 </script>
 <style>
@@ -47,6 +47,34 @@ body {
   * {
     user-select: none !important;
     pointer-events: none !important;
+  }
+}
+
+.googleAuth-btn {
+  background-color: transparent;
+  color: #333333;
+  border: solid 1px #4285f4;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 15px;
+  gap: 10px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+
+  Icon {
+    margin-right: 10px;
+    font-size: 20px;
+  }
+
+  &:hover {
+    transition: all 0.3s ease;
+    color: #424242;
+    background-color: #4286f446;
   }
 }
 </style>

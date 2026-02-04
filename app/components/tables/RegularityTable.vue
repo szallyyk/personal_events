@@ -2,7 +2,7 @@
   <div class="card">
     <div class="card-header">
       <div class="row">
-        <h3>Správa regularit</h3>
+        <h3>Opakující se události</h3>
       </div>
     </div>
     <div class="card-body px-1">
@@ -132,7 +132,7 @@
                         dayNumber: '',
                         timeFrom: '',
                         timeTo: '',
-                        eventTypeId: '',
+                        eventTypeId: ''
                       })
                     "
                     :disabled="formDisabled"
@@ -166,7 +166,7 @@
                           dayNumber: '',
                           timeFrom: '',
                           timeTo: '',
-                          eventTypeId: '',
+                          eventTypeId: ''
                         })
                       "
                       :disabled="formDisabled"
@@ -199,20 +199,21 @@
 <script setup lang="ts">
 import DatePicker from "primevue/datepicker";
 import { useForm, useFieldArray, Field, ErrorMessage } from "vee-validate";
+import * as yup from "yup";
 
 const props = defineProps({
   formErrors: {
     type: Object,
-    default: () => ({}),
+    default: () => ({})
   },
   initialRegularity: {
     type: Array,
-    default: () => [],
+    default: () => []
   },
   eventTypes: {
     type: Array,
-    default: () => [],
-  },
+    default: () => []
+  }
 });
 
 const emit = defineEmits(["submit", "delete", "change"]);
@@ -221,31 +222,42 @@ const isSaving = ref(false);
 const formDisabled = ref(false);
 
 const days = [
-  { id: 0, name: "Pondělí", value: "monday" },
-  { id: 1, name: "Úterý", value: "tuesday" },
-  { id: 2, name: "Středa", value: "wednesday" },
-  { id: 3, name: "Čtvrtek", value: "thursday" },
-  { id: 4, name: "Pátek", value: "friday" },
-  { id: 5, name: "Sobota", value: "saturday" },
-  { id: 6, name: "Neděle", value: "sunday" },
+  { id: 1, name: "Pondělí", value: "monday" },
+  { id: 2, name: "Úterý", value: "tuesday" },
+  { id: 3, name: "Středa", value: "wednesday" },
+  { id: 4, name: "Čtvrtek", value: "thursday" },
+  { id: 5, name: "Pátek", value: "friday" },
+  { id: 6, name: "Sobota", value: "saturday" },
+  { id: 7, name: "Neděle", value: "sunday" }
 ];
+
+const schema = yup.object({
+  regularities: yup.array().of(
+    yup.object({
+      dayNumber: yup.string().required("Den je povinný"),
+      timeFrom: yup.string().required("Čas od je povinný"),
+      timeTo: yup.string().required("Čas do je povinný"),
+      eventTypeId: yup.string().required("Typ události je povinný")
+    })
+  )
+});
 
 const { values, handleSubmit, setErrors } = useForm({
   initialValues: {
-    regularities: props.initialRegularity || [],
+    regularities: props.initialRegularity || []
   },
+  validationSchema: schema
 });
 
 const { fields, push, remove } = useFieldArray("regularities");
 
-// Sledování změn
 watch(
   values,
   (newValues) => {
     let emitOption = { name: "regularity", isEdit: true };
     emit("change", emitOption);
   },
-  { deep: true },
+  { deep: true }
 );
 
 const onSubmit = handleSubmit((formValues) => {
@@ -255,14 +267,15 @@ const onSubmit = handleSubmit((formValues) => {
       dayNumber: r.dayNumber,
       timeFrom: r.timeFrom ? formatTime(r.timeFrom) : null,
       timeTo: r.timeTo ? formatTime(r.timeTo) : null,
-      eventTypeId: r.eventTypeId || null,
-    })),
+      eventTypeId: r.eventTypeId || null
+    }))
   };
   emit("submit", sendData);
 });
 
 function handleDelete(index: number) {
-  emit("delete", index);
+  remove(index);
+  //emit("delete", index);
 }
 
 function disableForm() {
@@ -276,12 +289,12 @@ const { watchAndSetErrors } = useFormErrorTransformer();
 watchAndSetErrors(
   () => props.formErrors,
   setErrors,
-  "regularities", // název tvého array fieldu
+  "regularities" // název tvého array fieldu
 );
 
 defineExpose({
   disableForm,
-  enableForm,
+  enableForm
 });
 </script>
 <style></style>

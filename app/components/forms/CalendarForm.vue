@@ -5,9 +5,10 @@
     v-slot="{ errors }"
     @submit="onSubmit"
     :validation-schema="schema"
+    :initial-values="intialValues"
   >
     <div class="col-lg-12">
-      <label for="name" class="form-label">Název kalendáře</label>
+      <label for="name" class="form-label">Interní název kalendáře</label>
       <Field
         id="name"
         name="name"
@@ -17,6 +18,19 @@
         placeholder="Zadejte název kalendáře"
       />
       <ErrorMessage name="name" class="invalid-feedback" />
+    </div>
+
+    <div class="col-lg-12">
+      <label for="namePublic" class="form-label">Veřejný název kalendáře</label>
+      <Field
+        id="namePublic"
+        name="namePublic"
+        type="text"
+        class="form-control"
+        :class="{ 'is-invalid': errors.namePublic }"
+        placeholder="Zadejte veřejný název kalendáře"
+      />
+      <ErrorMessage name="namePublic" class="invalid-feedback" />
     </div>
     <div class="col-lg-12">
       <label for="description" class="form-label">Popisek</label>
@@ -71,6 +85,12 @@ import * as yup from "yup";
 
 const props = defineProps<{
   formErrors?: Record<string, string[]>;
+  data?: {
+    name: string;
+    description: string;
+    infoDescription: string;
+    namePublic: string;
+  };
 }>();
 
 const formRef = ref<typeof Form>();
@@ -78,7 +98,14 @@ const formRef = ref<typeof Form>();
 const schema = yup.object({
   name: yup.string().required("Název kalendáře je povinný"),
   description: yup.string(),
-  infoDescription: yup.string(),
+  infoDescription: yup.string()
+});
+
+const intialValues = ref({
+  name: props.data?.name || "",
+  description: props.data?.description || "",
+  infoDescription: props.data?.infoDescription || "",
+  namePublic: props.data?.namePublic || ""
 });
 
 const emit = defineEmits(["submit", "close"]);
@@ -98,6 +125,6 @@ watch(
       formRef.value.setErrors(props.formErrors);
     }
   },
-  { deep: true },
+  { deep: true }
 );
 </script>

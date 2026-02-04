@@ -33,7 +33,7 @@ const handleLogout = () => {
   <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container">
       <!-- Logo -->
-      <NuxtLink  class="navbar-brand fw-bold" @click="closeMenu">
+      <NuxtLink class="navbar-brand fw-bold" @click="closeMenu">
         Personal Events
       </NuxtLink>
 
@@ -49,7 +49,7 @@ const handleLogout = () => {
             @click="toggleUserDropdown"
           >
             <Icon name="mdi:person" size="32" />
-            <span class="d-none d-sm-inline">Jmeno uzivatele</span>
+            <span class="d-none d-sm-inline">{{ userStore.user?.email }}</span>
             <Icon
               name="mdi:chevron-down"
               size="20"
