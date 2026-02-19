@@ -88,7 +88,7 @@ const deleteState = ref<{
   type: "event" | "regularity" | "option" | null;
 }>({
   id: null,
-  type: null
+  type: null,
 });
 
 function handleChange(emitOption: { name: string; isEdit: boolean }) {
@@ -112,13 +112,13 @@ const isLoading = ref(true);
 async function getDetailData() {
   try {
     const responseTypes = await $api.get("/calendars/events/types", {
-      headers: { ["Calendar-Slug"]: routeSlug }
+      headers: { ["Calendar-Slug"]: routeSlug },
     });
     const responseEvents = await $api.get("/calendars/events", {
-      headers: { ["Calendar-Slug"]: routeSlug }
+      headers: { ["Calendar-Slug"]: routeSlug },
     });
     const responseRegularity = await $api.get("/calendars/regularities", {
-      headers: { ["Calendar-Slug"]: routeSlug }
+      headers: { ["Calendar-Slug"]: routeSlug },
     });
 
     calendarEvents.value = responseEvents.data.data.records;
@@ -128,10 +128,12 @@ async function getDetailData() {
       date: e.date.formatSystem ? new Date(e.date.formatSystem) : null,
       timeFrom: e.timeFrom,
       timeTo: e.timeTo,
-      eventTypeId: e.eventType.id
+      eventTypeId: e.eventType.id,
     }));
 
-    calendarEventTypes.value = responseTypes.data.data.records;
+    calendarEventTypes.value = responseTypes.data.data.records.sort(
+      (a, b) => a.rank - b.rank,
+    );
 
     calendarRegularity.value = responseRegularity.data.data.records;
 
@@ -140,7 +142,7 @@ async function getDetailData() {
       dayNumber: e.dayNumber,
       timeFrom: e.timeFrom,
       timeTo: e.timeTo,
-      eventTypeId: e.eventType.id
+      eventTypeId: e.eventType.id,
     }));
     formKey.value += 1;
     isLoading.value = false;
@@ -154,7 +156,7 @@ async function getDetailData() {
 async function updateEvents(sendData: EventDate) {
   try {
     const response = await $api.post("/calendars/events", sendData, {
-      headers: { ["Calendar-Slug"]: routeSlug }
+      headers: { ["Calendar-Slug"]: routeSlug },
     });
     alert(response.data.message, "success");
     getDetailData();
@@ -171,7 +173,7 @@ async function updateEvents(sendData: EventDate) {
 async function updateRegularity(sendData: RegularityEvent) {
   try {
     const response = await $api.post("/calendars/regularities", sendData, {
-      headers: { ["Calendar-Slug"]: routeSlug }
+      headers: { ["Calendar-Slug"]: routeSlug },
     });
     alert(response.data.message, "success");
     getDetailData();
@@ -188,7 +190,7 @@ async function updateRegularity(sendData: RegularityEvent) {
 async function updateOption(sendData: any) {
   try {
     const response = await $api.post("/calendars/events/types", sendData, {
-      headers: { ["Calendar-Slug"]: routeSlug }
+      headers: { ["Calendar-Slug"]: routeSlug },
     });
     alert(response.data.message, "success");
     getDetailData();
@@ -216,7 +218,7 @@ async function handleDeleteConfirm() {
 function openDeleteModal(eventId: number) {
   deleteState.value = {
     id: eventId,
-    type: "event"
+    type: "event",
   };
   modalStore.confirmModalVisible = true;
 }
@@ -224,7 +226,7 @@ function openDeleteModal(eventId: number) {
 function openDeleteRegularityModal(regularityId: number) {
   deleteState.value = {
     id: regularityId,
-    type: "regularity"
+    type: "regularity",
   };
   modalStore.confirmModalVisible = true;
 }
@@ -232,7 +234,7 @@ function openDeleteRegularityModal(regularityId: number) {
 function openDeleteOption(optionId: number) {
   deleteState.value = {
     id: optionId,
-    type: "option"
+    type: "option",
   };
   modalStore.confirmModalVisible = true;
 }
@@ -241,13 +243,13 @@ function closeDeleteModal() {
   modalStore.confirmModalVisible = false;
   deleteState.value = {
     id: null,
-    type: null
+    type: null,
   };
 }
 async function deleteEvent(eventId: number) {
   try {
     const response = await $fetch(`/api/event/${eventId}`, {
-      method: "DELETE"
+      method: "DELETE",
     });
 
     if (response.success) {
@@ -264,7 +266,7 @@ async function deleteEvent(eventId: number) {
 async function deleteRegularity(regularityId: number) {
   try {
     const response = await $fetch(`/api/regularity/${regularityId}`, {
-      method: "DELETE"
+      method: "DELETE",
     });
 
     if (response.success) {
@@ -281,7 +283,7 @@ async function deleteRegularity(regularityId: number) {
 async function deleteOption(optionId: number) {
   try {
     const response = await $fetch(`/api/option/${optionId}`, {
-      method: "DELETE"
+      method: "DELETE",
     });
 
     if (response.success) {
@@ -296,11 +298,11 @@ async function deleteOption(optionId: number) {
 }
 
 useHead({
-  title: "Správa událostí"
+  title: "Správa událostí",
 });
 
 definePageMeta({
-  layout: "admin"
+  layout: "admin",
 });
 
 onMounted(async () => {

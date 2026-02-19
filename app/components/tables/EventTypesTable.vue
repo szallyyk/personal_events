@@ -14,14 +14,28 @@
           <table class="table-evenets table table-bordered">
             <thead>
               <tr>
+                <th class="table-drag"></th>
                 <th class="table-id">Pořadí</th>
                 <th class="table-name">Název</th>
                 <th class="table-cssClass">Barva</th>
                 <th class="table-action">Akce</th>
               </tr>
             </thead>
-            <tbody>
-              <tr v-for="(field, index) in fields" :key="field.key">
+            <draggable
+              :model-value="fields"
+              handle=".drag-handle"
+              :animation="200"
+              @end="onDragEnd"
+              tag="tbody"
+            >
+              <tr
+                v-for="(field, index) in fields"
+                :key="field.key"
+                class="item-with-handle"
+              >
+                <td>
+                  <Icon name="mdi:drag" class="drag-handle" size="32" />
+                </td>
                 <td>
                   <Field
                     :name="`eventTypes[${index}].id`"
@@ -30,16 +44,7 @@
                     :disabled="formDisabled"
                   />
                   <div class="d-flex flex-column gap-1">
-                    <Field
-                      :name="`eventTypes[${index}].rank`"
-                      type="number"
-                      class="form-control"
-                      :disabled="formDisabled"
-                    />
-                    <ErrorMessage
-                      :name="`eventTypes[${index}].rank`"
-                      class="text-danger"
-                    />
+                    {{ index + 1 }}
                   </div>
                 </td>
                 <td>
@@ -89,7 +94,7 @@
                   </button>
                 </td>
               </tr>
-            </tbody>
+            </draggable>
             <tfoot v-if="fields.length === 0">
               <tr>
                 <td colspan="4" class="text-center">
@@ -131,20 +136,23 @@
 </template>
 
 <script setup lang="ts">
+import { VueDraggableNext as draggable } from "vue-draggable-next";
+
 import { useForm, useFieldArray, Field, ErrorMessage } from "vee-validate";
 import * as yup from "yup";
 
 const { alert } = useToastStore();
+const { watchAndSetErrors } = useFormErrorTransformer();
 
 const props = defineProps({
   formErrors: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   },
   initialOptions: {
     type: Array,
-    default: () => []
-  }
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(["submit", "delete", "change"]);
@@ -161,19 +169,19 @@ const schema = yup.object({
       hexColor: yup
         .string()
         .matches(/^#([0-9A-F]{3}){1,2}$/i, "Neplatný formát barvy")
-        .required("Barva je povinná")
-    })
-  )
+        .required("Barva je povinná"),
+    }),
+  ),
 });
 
-const { values, handleSubmit, setErrors } = useForm({
+const { values, handleSubmit, setErrors, setFieldValue } = useForm({
   initialValues: {
-    eventTypes: props.initialOptions || []
+    eventTypes: props.initialOptions || [],
   },
-  validationSchema: schema
+  validationSchema: schema,
 });
 
-const { fields, push, remove } = useFieldArray("eventTypes");
+const { fields, push, remove, move } = useFieldArray("eventTypes");
 
 // Sledování změn
 watch(
@@ -182,17 +190,17 @@ watch(
     let emitOption = { name: "option", isEdit: true };
     emit("change", emitOption);
   },
-  { deep: true }
+  { deep: true },
 );
 
 const onSubmit = handleSubmit((formValues) => {
   const sendData = {
     eventTypes: formValues.eventTypes.map((r: any) => ({
       id: r.id,
-      rank: r.rank,
+      rank: parseInt(r.rank, 10),
       name: r.name,
-      hexColor: r.hexColor
-    }))
+      hexColor: r.hexColor,
+    })),
   };
   emit("submit", sendData);
 });
@@ -213,21 +221,60 @@ function disableForm() {
 function enableForm() {
   formDisabled.value = false;
 }
-
-const { watchAndSetErrors } = useFormErrorTransformer();
+function onDragEnd(event: any) {
+  const { oldIndex, newIndex } = event;
+  if (
+    oldIndex !== undefined &&
+    newIndex !== undefined &&
+    oldIndex !== newIndex
+  ) {
+    move(oldIndex, newIndex);
+    fields.value.forEach((_, index) => {
+      setFieldValue(`eventTypes[${index}].rank`, String(index + 1));
+    });
+  }
+}
+const onListChange = (event: any) => {
+  console.log("List changed:", event);
+  console.log("New order:", fields.value);
+  console.log("Current values:", values.eventTypes);
+};
 
 watchAndSetErrors(
   () => props.formErrors,
   setErrors,
-  "eventTypes" // název tvého array fieldu
+  "eventTypes", // název tvého array fieldu
 );
 
 defineExpose({
   disableForm,
-  enableForm
+  enableForm,
 });
 </script>
 <style scoped>
+.item-with-handle {
+  align-items: center;
+  padding: 10px;
+  margin: 5px 0;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.drag-handle {
+  cursor: grab;
+  margin-right: 10px;
+  color: #999;
+  user-select: none;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+.table-drag {
+  width: 40px;
+}
+
 .event-danger {
   background-color: #fd152c !important;
 }

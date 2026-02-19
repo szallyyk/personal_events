@@ -46,6 +46,7 @@
   <TransitionFade>
     <ConfirmModal
       v-if="modalStore.confirmModalVisible"
+      :name="modalStore.confirmModalData.name"
       @confirm="handleDeleteConfirm"
       @close="closeDeleteModal"
     />
@@ -111,6 +112,7 @@ function handleSettings(calendar: Calendar) {
 
 function openDeleteModal(calendar: Calendar) {
   deleteSlug.value = calendar.slug;
+  modalStore.confirmModalData = calendar;
   modalStore.confirmModalVisible = true;
 }
 
@@ -142,7 +144,7 @@ function openItemModal() {
 async function getDetailCalendar(slug: string) {
   try {
     const response = await $api.get(
-      `/calendars/${slug}?dateFrom=${monday}&dateTo=${sunday}`
+      `/calendars/${slug}?dateFrom=${monday}&dateTo=${sunday}`,
     );
     calendarDetail.value = response.data.data.calendar;
     openItemModal();
@@ -165,7 +167,7 @@ async function addCalendar(data: {
     try {
       const response = await $api.put(
         `/calendars/${calendarDetail.value.slug}`,
-        data
+        data,
       );
       alert(response.data.message, "success");
       getCalendars();
@@ -192,11 +194,11 @@ onMounted(async () => {
 });
 
 useHead({
-  title: "Přehled kalendářů"
+  title: "Přehled kalendářů",
 });
 
 definePageMeta({
-  layout: "admin"
+  layout: "admin",
 });
 </script>
 

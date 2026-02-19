@@ -7,15 +7,15 @@
         class="btn btn-warning d-flex align-items-center gap-1"
         @click="settingsCalendar()"
       >
-        <Icon name="mdi:cog-outline" />
-        Správa
+        <Icon name="mdi:calendar" />
+        Události
       </button>
       <button
         class="btn btn-secondary d-flex align-items-center gap-1"
         @click="detailCalendar()"
       >
         <Icon name="mdi:eye-outline" />
-        Zobrazit
+        Náhled
       </button>
       <button
         class="btn btn-primary d-flex align-items-center gap-1"

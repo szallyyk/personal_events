@@ -49,7 +49,7 @@ const handleLogout = () => {
             @click="toggleUserDropdown"
           >
             <Icon name="mdi:person" size="32" />
-            <span class="d-none d-sm-inline">{{ userStore.user?.email }}</span>
+            <span class="d-none d-sm-inline">Jmeno uzivatele</span>
             <Icon
               name="mdi:chevron-down"
               size="20"

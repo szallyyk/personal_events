@@ -4,6 +4,8 @@ export const useModalStore = defineStore("useModalStore", {
         confirmModalVisible: false,
         confirmRegularityModalVisible: false,
         itemModalVisible: false,
+        emailModalVisible: false,
+        confirmModalData: {},
     }),
     actions: {
     }

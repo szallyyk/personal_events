@@ -11,7 +11,14 @@ useHead({
   titleTemplate: "%s - Personal Events"
 });
 </script>
-<style>
+<style lang="scss">
+.fc-list-day-cushion.fc-cell-shaded{
+  display: flex;
+  button{
+    margin-left: auto;
+  }
+}
+
 a {
   text-decoration: none;
   color: inherit;

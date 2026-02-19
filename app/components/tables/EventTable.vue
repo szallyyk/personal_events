@@ -139,7 +139,7 @@
                         date: '',
                         timeFrom: '',
                         timeTo: '',
-                        eventTypeId: ''
+                        eventTypeId: '',
                       })
                     "
                     :disabled="formDisabled"
@@ -173,7 +173,7 @@
                           date: '',
                           timeFrom: '',
                           timeTo: '',
-                          eventTypeId: ''
+                          eventTypeId: '',
                         })
                       "
                       :disabled="formDisabled"
@@ -211,16 +211,16 @@ import * as yup from "yup";
 const props = defineProps({
   formErrors: {
     type: Object,
-    default: () => ({})
+    default: () => ({}),
   },
   initialEvents: {
     type: Array,
-    default: () => []
+    default: () => [],
   },
   eventTypes: {
     type: Array,
-    default: () => []
-  }
+    default: () => [],
+  },
 });
 
 const emit = defineEmits(["submit", "delete", "change"]);
@@ -234,16 +234,16 @@ const schema = yup.object({
       date: yup.string().required("Datum je povinné"),
       timeFrom: yup.string().required("Čas od je povinný"),
       timeTo: yup.string().required("Čas do je povinný"),
-      eventTypeId: yup.string().required("Typ události je povinný")
-    })
-  )
+      eventTypeId: yup.string().required("Typ události je povinný"),
+    }),
+  ),
 });
 
 const { values, handleSubmit, setErrors } = useForm({
   initialValues: {
-    events: props.initialEvents || []
+    events: props.initialEvents || [],
   },
-  validationSchema: schema
+  validationSchema: schema,
 });
 
 const { fields, push, remove } = useFieldArray("events");
@@ -254,7 +254,7 @@ watch(
     let emitOption = { name: "events", isEdit: true };
     emit("change", emitOption);
   },
-  { deep: true }
+  { deep: true },
 );
 
 const onSubmit = handleSubmit((formValues) => {
@@ -264,8 +264,8 @@ const onSubmit = handleSubmit((formValues) => {
       date: e.date ? formatDate(e.date) : null,
       timeFrom: e.timeFrom ? formatTime(e.timeFrom) : null,
       timeTo: e.timeTo ? formatTime(e.timeTo) : null,
-      eventTypeId: e.eventTypeId || null
-    }))
+      eventTypeId: e.eventTypeId || null,
+    })),
   };
   emit("submit", sendData);
 });
@@ -291,11 +291,11 @@ const { watchAndSetErrors } = useFormErrorTransformer();
 watchAndSetErrors(
   () => props.formErrors,
   setErrors,
-  "events" // název tvého array fieldu
+  "events", // název tvého array fieldu
 );
 
 defineExpose({
   disableForm,
-  enableForm
+  enableForm,
 });
 </script>

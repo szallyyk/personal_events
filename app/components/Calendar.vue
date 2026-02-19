@@ -38,16 +38,31 @@
       </p>
     </div>
   </div>
+  <TransitionFade>
+    <ItemModal
+      :is-open="modalStore.emailModalVisible"
+      @close="closeEmailModal"
+      title="Žádost o zavolání"
+    >
+      <CalendarEmailForm
+        @submit="sendEmail"
+        @close="closeEmailModal"
+        :data="emailModalData"
+      ></CalendarEmailForm>
+    </ItemModal>
+  </TransitionFade>
 </template>
 
 <script setup>
+import { TransitionFade } from "@morev/vue-transitions";
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import FullCalendar from "@fullcalendar/vue3";
 import interactionPlugin from "@fullcalendar/interaction";
 import csLocale from "@fullcalendar/core/locales/cs";
 import listPlugin from "@fullcalendar/list";
-
+import { date } from "yup";
+const modalStore = useModalStore();
 const route = useRoute();
 const router = useRouter();
 
@@ -57,6 +72,14 @@ const { alert } = useToastStore();
 const { getWeekRangeFormatted } = useWeekRange();
 
 const { monday, sunday } = getWeekRangeFormatted();
+
+const emailModalData = ref({
+  name: "",
+  phone: "",
+  date: null,
+  time: null,
+  message: null,
+});
 
 const isRouteParams = computed(() => {
   if (route.query.dateFrom && route.query.dateTo) {
@@ -137,8 +160,8 @@ function updateQueryParams(startDate, endDate) {
       query: {
         ...route.query,
         dateFrom,
-        dateTo
-      }
+        dateTo,
+      },
     });
   }
 }
@@ -201,8 +224,8 @@ function generateEvents() {
           extendedProps: {
             isEmpty: true,
             hexColor: "#10b981",
-            typeName: ""
-          }
+            typeName: "",
+          },
         });
       }
     } else {
@@ -220,8 +243,8 @@ function generateEvents() {
             typeName: record.eventType.name,
             hexColor: record.eventType.hexColor,
             baseType: record.baseType,
-            isEmpty: false
-          }
+            isEmpty: false,
+          },
         });
       });
     }
@@ -244,32 +267,42 @@ const calendarOptions = ref({
   initialView: "listWeek",
   weekends: false,
   height: "auto",
+
   buttonText: {
     today: "Aktuální měsíc",
     month: "Měsíc",
     week: "Týden",
     day: "Den",
-    list: "Týden"
+    list: "Týden",
   },
   headerToolbar: {
     left: "secondTitle description",
     center: "title",
-    right: "prev,next"
+    right: "prev,next",
   },
   customButtons: {
     secondTitle: {
       text: computed(
         () =>
-          `Přehled dostupnosti - ${calendarInfo.value ? calendarInfo.value.namePublic : ""}`
+          `Přehled dostupnosti - ${calendarInfo.value ? calendarInfo.value.namePublic : ""}`,
       ),
-      click: function () {}
+      click: function () {},
     },
     description: {
       text: computed(
-        () => `${calendarInfo.value ? calendarInfo.value.description : ""}`
+        () => `${calendarInfo.value ? calendarInfo.value.description : ""}`,
       ),
-      click: function () {}
-    }
+      click: function () {},
+    },
+  },
+  dayHeaderDidMount: function (arg) {
+    const btn = document.createElement("button");
+    btn.textContent = "Žádám o zavolání";
+    btn.className = "btn btn-sm btn-primary ";
+    btn.addEventListener("click", () => {
+      handleDayAction(arg.date);
+    });
+    arg.el.querySelector(".fc-list-day-cushion")?.appendChild(btn);
   },
   datesSet: async function (info) {
     var today = new Date();
@@ -303,7 +336,7 @@ const calendarOptions = ref({
   selectable: true,
   events: [],
   eventClick: handleEventClick,
-  dateClick: handleDateSelect
+  dateClick: handleDateSelect,
 });
 
 // Watch pro aktualizaci eventů když se změní data
@@ -314,8 +347,40 @@ watch(
       calendarOptions.value.events = generateEvents();
     }
   },
-  { deep: true }
+  { deep: true },
 );
+
+function closeEmailModal() {
+  modalStore.emailModalVisible = false;
+}
+
+async function sendEmail(values) {
+  try {
+    const sendData = {
+      name: values.name,
+      phone: values.phone,
+      message: values.message,
+      date: formatDate(values.date),
+      time: formatTime(values.time),
+    };
+
+    const response = await $api.post("/calendars/form", sendData, {
+      headers: {
+        "Calendar-Slug": route.params.slug,
+      },
+    });
+    alert(response.data.message, "success");
+    closeEmailModal();
+  } catch (err) {
+    const { message } = parseApiError(err);
+    alert(message, "error");
+  }
+}
+
+function handleDayAction(date) {
+  emailModalData.value.date = formatDateToCzech(date);
+  modalStore.emailModalVisible = true;
+}
 </script>
 
 <style lang="scss" scoped>

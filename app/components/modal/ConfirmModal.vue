@@ -2,7 +2,7 @@
   <div class="custom-modal-backdrop"></div>
   <div class="custom-modal">
     <div class="custom-modal-header">
-      <span>Opravdu chcete smazat tuto událost?</span>
+      <span>Opravdu chcete smazat kalendář {{ name }}?</span>
       <div class="close-btn">
         <Icon
           name="mdi:close"
@@ -22,7 +22,14 @@
   </div>
 </template>
 
-<script setup></script>
+<script setup lang="ts">
+defineProps({
+  name: {
+    type: String,
+    required: true,
+  },
+});
+</script>
 
 <style lang="scss">
 .custom-modal-backdrop {
@@ -43,7 +50,7 @@
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   z-index: 2;
-  width: 400px;
+  min-width: 400px;
   max-width: 90%;
 }
 .custom-modal-header {
@@ -55,6 +62,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
 }
 .custom-modal-body {
   padding: 16px;
